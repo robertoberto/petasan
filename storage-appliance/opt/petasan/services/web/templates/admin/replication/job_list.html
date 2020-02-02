@@ -1,0 +1,376 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title%}<title>Replication</title>{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb">
+    <li><i class="fa fa-clone"></i> Replication </li>
+    <li><i class="fa fa-calendar"></i> &nbsp;Jobs </li>
+
+</ol>
+{% endblock %}
+
+
+{% block content_header%} Replication Jobs {% endblock %}
+{% block content %}
+
+<!-- New --><!-- Style added for the linkable rows in the table -->
+<!-- ========================================================== -->
+<style>
+
+    #rep_jobs_table td a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: #000000;
+    }
+
+    #pools_Table td a:hover {
+        color: #000000;
+    }
+
+    #pools_Table td a:active {
+        color: #000000;
+    }
+
+    #pools_Table td a:visited {
+        color: #000000;
+    }
+    textarea {
+    border: none;
+    overflow: auto;
+    outline: none;
+
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+
+    resize: none; /*remove the resize handle on the bottom right*/
+}
+
+</style>
+<!-- ============================================== -->
+
+
+<section class="content">
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                    <!-- ########################################################################################### -->
+                    <!--                                    START OF PAGE CONTENT                                    -->
+                    <!-- ########################################################################################### -->
+
+                    <br>
+                    <div class="row">
+                        <!-- Add New Replication Job Button -->
+
+                        <div class="col-md-1">
+                            <form method="POST" action="{{ url_for('replication_controller.add_job') }}"
+                                  id="addReplicationJob">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="glyphicon glyphicon-plus"></i>
+                                    &nbsp;Add Job
+                                </button>
+                            </form>
+                        </div>
+                        <!-- End Of Add New Replication Job Button -->
+
+                        <!-- Active Replication Jobs Button -->
+                        <div class="col-md-1">
+                            <a class="btn btn-primary" id="activeJobs" href="#" data-toggle="modal"
+                               data-target="#activeJobsModal"
+                               onclick=""><i class="glyphicon glyphicon-th-list"></i>&nbsp;&nbsp;Active Jobs</a>
+                        </div>
+                        <!-- End Of Active Replication Jobs Button -->
+                    </div>
+
+
+                    <!-- ======================================================================================= -->
+                    <!-- Active Replication Jobs Pop-Up -->
+                    <!-- ============================== -->
+                    <div class="modal fade" id="activeJobsModal" tabindex="-1" role="dialog"
+                         aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                        {% include "admin/replication/active_jobs.html" %}
+
+                    </div>
+
+                    <!-- End Of Modal Of Active Replication Jobs Pop-Up  -->
+                    <!-- ======================================================================================= -->
+
+                    <br>
+
+                    <div>
+                        <!-- ================================== -->
+                        <!-- Start of Table of Replication Jobs -->
+                        <!-- ================================== -->
+                        <table id="rep_jobs_table" class="table table-bordered table-striped">
+
+                            <!-- At first , check if the dictionary of Replication Jobs has any items -->
+                            <!-- -------------------------------------------------------------------- -->
+
+                            <!-- table header -->
+                            <!-- ------------ -->
+                            <thead>
+                            <tr>
+                                <th>Job Id</th>
+                                <th>Name</th>
+                                <th>Frequency</th>
+                                <th>Source Disk</th>
+                                <th>Destination Cluster</th>
+                                <th>Destination Disk</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+
+                            <!-- ------------------------------------------------------------------------------- -->
+
+                            {% if jobs_dict %}
+
+                            <!-- table body -->
+                            <!-- ---------- -->
+                            <tbody>
+                            {% for rep_job_id , rep_job_entity in jobs_dict.items() %}
+                            <tr>
+                                <td>
+                                    <a id="jobID" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_job_info('{{ url_for('replication_controller.job_details', job_id = rep_job_entity.job_id) }}')">{{
+                                        rep_job_entity.job_id }}</a>
+                                </td>
+
+                                <td>
+                                    <a id="jobName" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_job_info('{{ url_for('replication_controller.job_details', job_id = rep_job_entity.job_id) }}')">{{
+                                        rep_job_entity.job_name }}</a>
+                                </td>
+
+                                <td>
+                                    <a id="jobFrequency" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_job_info('{{ url_for('replication_controller.job_details', job_id = rep_job_entity.job_id) }}')">{{
+                                        rep_job_entity.schedule['type'] }}</a>
+                                </td>
+
+                                <td>
+                                    <a id="jobSourceDisk" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_job_info('{{ url_for('replication_controller.job_details', job_id = rep_job_entity.job_id) }}')">{{
+                                        rep_job_entity.source_disk_id }}</a>
+                                </td>
+
+                                <td>
+                                    <a id="jobDestCluster" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_job_info('{{ url_for('replication_controller.job_details', job_id = rep_job_entity.job_id) }}')">{{
+                                        rep_job_entity.destination_cluster_name }}</a>
+                                </td>
+
+                                <td>
+                                    <a id="jobDestDisk" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_job_info('{{ url_for('replication_controller.job_details', job_id = rep_job_entity.job_id) }}')">{{
+                                        rep_job_entity.destination_disk_id }}</a>
+                                </td>
+
+                                <td>
+                                    {% if rep_job_entity.status == "started" %}
+                                    <span class='badge bg-started'>Started</span>
+                                    {% elif rep_job_entity.status == "stopped" %}
+                                    <span class='badge bg-stop'>Stopped</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <!-- Start Button -->
+                                    {% if rep_job_entity.status == "stopped" %}
+                                    <div title="Start" class="btn-group">
+                                        <form action="{{ url_for('replication_controller.start_job', job_id = rep_job_entity.job_id) }}" method="post">
+                                            <button type="submit" class="btn btn-default">
+                                                <i class="fa fa-play"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% elif rep_job_entity.status == "started" %}
+                                    <!-- Stop Button -->
+                                    <div title="Stop" class="btn-group">
+                                        <form action="{{ url_for('replication_controller.stop_job', job_id = rep_job_entity.job_id) }}" method="post">
+                                            <button onclick="return doStop('{{rep_job_entity.job_name }}');"
+                                                    type="submit" class="btn btn-default">
+                                                <i class="fa fa-stop"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+
+                                    <span>&nbsp;</span>
+
+                                    <!-- Edit Button -->
+                                    <div title="Edit" class="btn-group ">
+                                        <form action="{{ url_for('replication_controller.view_job', job_id = rep_job_entity.job_id) }}" method="post">
+                                            <button type="submit" class="btn btn-default">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <span>&nbsp;</span>
+
+                                    <!-- Delete Button -->
+                                    <div title="Delete" class="btn-group ">
+                                        <form action="{{ url_for('replication_controller.delete_job', job_id = rep_job_entity.job_id) }}" method="post">
+                                            <button onclick="return doDelete('{{rep_job_entity.job_name }}');"
+                                                    type="submit" class="btn btn-default">
+                                                <i class="fa fa-remove"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <span>&nbsp;</span>
+
+                                    <!-- View Log Button -->
+                                    <div title="View Log" class="btn-group">
+                                        <form action="{{ url_for('replication_controller.view_job_log', job_name=rep_job_entity.job_name, job_id = rep_job_entity.job_id) }}" method="get">
+                                            <button type="submit" class="btn btn-default">
+                                                <i class="fa fa-fw fa-list"></i></button>
+                                        </form>
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+                            {%endif%}
+
+                        </table>
+                        <!-- ================================ -->
+                        <!-- End of Table of Replication Jobs -->
+                        <!-- ================================ -->
+
+                        <!-- New --><!-- Modal Of Pool Info Pop-Up -->
+                        <!-- ===================================== -->
+                        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                            {% include "admin/replication/job_details.html" %}
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+<input type="hidden" id="delete_message" value="{{ gettext('ui_admin_delete_replication_job_mesg') }}">
+<input type="hidden" id="stop_message" value="{{ gettext('ui_admin_replication_confirm_stopping_job') }}">
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('ScheduleJobs','ReplicationJobs')}}
+{% endblock %}
+
+{% block js%}
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+
+<script>
+    $(function () {
+        $("#rep_jobs_table").DataTable({
+            "columnDefs": [
+                {"orderable": false, "targets": [6,7]}
+            ]
+        });
+    });
+
+    // Delete Replication Job Script :
+    // ===============================
+    var delete_message = $("#delete_message").val();
+
+    function doDelete(job_name)
+    {
+        var final_delete_message ;
+
+        if(job_name != "")
+        {
+            final_delete_message = delete_message.replace('$', job_name);
+            var confirm_var = confirm(final_delete_message);
+        }
+        else
+        {
+            final_delete_message = delete_message.replace('$', '');
+            var confirm_var = confirm(final_delete_message);
+        }
+
+        // Confirmation :
+        if(confirm_var == true)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    // Stop Replication Job Script :
+    // =============================
+    var stop_message = $("#stop_message").val();
+
+    function doStop(job_name)
+    {
+        var final_delete_message ;
+
+        if(job_name != "")
+        {
+            final_delete_message = stop_message.replace('$', job_name);
+            var confirm_var = confirm(final_delete_message);
+        }
+        else
+        {
+            final_delete_message = stop_message.replace('$', '');
+            var confirm_var = confirm(final_delete_message);
+        }
+
+        // Confirmation :
+        if(confirm_var === true)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+</script>
+<script src="/static/dist/js/pages/schedule/select_schedule.js?v=7777777"></script>
+<script src="/static/dist/js/pages/replication/job_list.js?v=7777777"></script>
+
+{% endblock %}

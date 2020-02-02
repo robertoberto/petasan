@@ -1,0 +1,261 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.css">
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.skinModern.css">
+<link rel="stylesheet" href="/static/plugins/bootstrap-slider/slider.css">
+<link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+
+
+{% endblock %}
+
+{% block title %}<title> Add EC Profile </title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration </li>
+    <li><i class="fa fa-file"></i> <a href="/configuration/ec_profiles">EC Profiles </a></li>
+    <li><i class="fa fa-file"></i> Add EC Profile</li>
+</ol>
+{% endblock %}
+{% block content_header %} Add EC Profile {% endblock %}
+{% block content %}
+
+<style>
+.tooltip-inner {
+    text-align: left;
+}
+</style>
+
+<section class="content">
+    <form id="ec_profile_form" method="POST" action="{{url_for('ec_profile_controller.save_ec_profile')}}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-body">
+                        {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                        <div class="form-group" style="margin-left: 15px">
+                            <div class="row">
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_name" class="control-label">Name:<font
+                                                color="red">*</font></label>
+
+                                        <input id="name" type="text" name="profile_name"
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_k" class="control-label">K:<font
+                                                color="red">*</font></label><i data-toggle="tooltip" data-placement="right"
+                                               title='{{ gettext("ui_admin_ec_profile_k_explanation") }}'
+                                               class="fa fa-fw fa-info-circle"></i>
+
+                                        <input id="k" type="text" name="k"
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_m" class="control-label">M:<font
+                                                color="red">*</font></label><i data-toggle="tooltip" data-placement="right"
+                                               title='{{ gettext("ui_admin_ec_profile_m_explanation") }}'
+                                               class="fa fa-fw fa-info-circle"></i>
+
+                                        <input id="m" type="text" name="m"
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="row">
+
+                                <div class="form-group">
+                                    <div class="col-md-5">
+                                        <a href="#" class="btn btn-xs" onclick="onChangeAdvancedCheckbox(this);"><i style="color: black" class="glyphicon glyphicon-plus"></i></a>
+                                        <label class="form-check-label"> Advanced</label>
+                                    </div>
+                                </div>
+
+                            </div><br>
+
+                            <div class="toggle_show_hide" hidden>
+                            <div class="row"  id="plugin_div">
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_plugin" class="control-label">Plugin:</label>
+
+                                        <select id="plugin" name="plugin" class="form-control"  onchange="onChangePlugins(this);">
+                                            <option value=""></option>
+                                            <option value="isa">ISA</option>
+                                            <option value="jerasure">Jerasure</option>
+                                            <option value="lrc">Locally Repairable</option>
+                                            <option value="shec">SHEC</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                            </div></div>
+
+                        <div class="toggle_show_hide" hidden>
+
+                            <div class="row" id="technique_div" hidden>
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_technique" class="control-label">Technique:</label>
+
+                                        <select id="technique" name="technique" class="form-control">
+                                            <option value=""></option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="toggle_show_hide" hidden>
+                            <div class="row"  id="stripe_unit_div">
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_stripe_unit" class="control-label">Stripe unit:</label><i data-toggle="tooltip" data-placement="right"
+                                               title='{{ gettext("ui_admin_ec_profile_stripe_unit_explanation") }}'
+                                               class="fa fa-fw fa-info-circle"></i>
+                                        <input id="stripe_unit" type="text" name="stripe_unit"
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+
+                            </div></div>
+
+
+                        <div class="toggle_show_hide" hidden>
+                            <div class="row"  id="packet_size_div" hidden>
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_packet_size" class="control-label">Packet Size:</label>
+
+                                        <input id="packet_size" type="text" name="packet_size"
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                        <div class="toggle_show_hide" hidden>
+                            <div class="row"  id="locality_div" hidden>
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_locality" class="control-label">Locality:<font
+                                                color="red">*</font></label>
+
+                                        <input id="locality" type="text" name="locality"
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="toggle_show_hide" hidden>
+
+                            <div class="row" id="durability_estimator_div" hidden>
+                                <div class=" col-md-5">
+                                    <div class="form-group">
+                                        <label id="label_durability_estimator" class="control-label">Durability Estimator:<font
+                                                color="red">*</font></label>
+
+                                        <input id="durability_estimator" type="text" name="durability_estimator"
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+                            <input type="hidden" id="advanced" name="advanced" value="">
+
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="box-footer">
+
+                                        <button type="submit" class="btn btn-primary pull-right " value="submit">Save
+                                        </button>
+
+                                        <button type="button" style="margin-right: 10px"
+                                                class="btn btn-default pull-right" id="cancelBtn" value="cancel">Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Configurtion','ProfilesList')}}
+{% endblock %}
+
+
+{% block js %}
+
+<script src="/static/dist/js/pages/ec_profile/add_ec_profile.js?v=7777777"></script>
+
+<script>
+
+    var path = "{{url_for('ec_profile_controller.get_ec_profiles')}}";
+    set_cancel_add_ec_profile(path);
+
+    var messages = {};
+    messages.profile_name_required = '{{ gettext("ui_admin_profile_name_required") }}';
+    messages.profile_name_should_be_string = '{{ gettext("ui_admin_profile_name_should_be_string") }}';
+    messages.profile_name_shouldnot_have_space = '{{ gettext("ui_admin_profile_name_shouldnot_have_space")}}';
+    messages.profile_k_required = '{{ gettext("ui_admin_profile_k_required") }}';
+    messages.profile_k_should_be_a_number = '{{ gettext("ui_admin_profile_k_should_be_a_number") }}';
+    messages.profile_m_required = '{{ gettext("ui_admin_profile_m_required") }}';
+    messages.profile_m_should_be_a_number = '{{ gettext("ui_admin_profile_m_should_be_a_number") }}';
+    messages.profile_stripe_unit_should_be_a_number = '{{ gettext("ui_admin_profile_stripe_unit_should_be_a_number") }}';
+    messages.profile_packet_size_should_be_a_number = '{{ gettext("ui_admin_profile_packet_size_should_be_a_number") }}';
+    messages.profile_locality_should_be_a_number = '{{ gettext("ui_admin_profile_locality_should_be_a_number") }}';
+    messages.profile_durability_estimator_should_be_a_number = '{{ gettext("ui_admin_profile_durability_estimator_should_be_a_number") }}';
+    messages.profile_locality_should_be_entered = '{{ gettext("ui_admin_profile_locality_should_be_entered") }}';
+    messages.profile_durability_estimator_should_be_entered = '{{ gettext("ui_admin_profile_durability_estimator_should_be_entered") }}';
+</script>
+
+{% endblock %}

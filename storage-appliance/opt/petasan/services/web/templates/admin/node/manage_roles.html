@@ -1,0 +1,89 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+{% endblock %}
+
+{% block title%}<title>Node Manage Roles</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-bars"></i> Manage Nodes</li>
+     <li><i class="fa fa-object-group"></i> <a href="{{ url_for('node_controller.node_list') }}"> Nodes List</a> </li>
+    <li><i class="fa fa-cog"></i> Manage Roles</li>
+</ol>
+{% endblock %}
+{% block content_header%}Node {{node.name}} Roles{% endblock %}
+{% block content %}
+<section class="content">
+    <form id="manage_roles_form" method="post"
+          action="{{ url_for('node_controller.update_node_manage_roles', node_name=node.name) }}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box  box-default">
+                    <div class="box-body">
+                        <!-- message area -->
+                        {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                        <!--/ message area -->
+                        <br>
+                        <input style="position: absolute; margin: 0px;" class="icheckbox_minimal-blue"
+                               type="checkbox" name="option_manage" id="manage"
+                               {% if node.is_management %}
+                               checked="checked"
+                               {% endif %} disabled>
+                        <label style="padding-left:20px;" for="option_manage">Management and Monitoring Services </label><br>
+                        <input style="position: absolute; margin: 0px;" class="icheckbox_minimal-blue"
+                               type="checkbox" name="option_storage" id="option_storage" value="storage"
+                               {% if node.is_storage %}
+                               checked="checked" disabled
+                               {% endif %}>
+                        <label style="padding-left:20px;" for="option_storage">Local Storage Service</label><br>
+                        <input style="position: absolute; margin: 0px;" class="icheckbox_minimal-blue"
+                               type="checkbox" name="option_iscsi" id="option_iscsi" value="iscsi"
+                               {% if node.is_iscsi %}
+                               checked="checked" disabled
+                               {% endif %}>
+                        <label style="padding-left:20px;" for="option_iscsi">iSCSI Target Service</label><br>
+                        <input style="position: absolute; margin: 0px;" class="icheckbox_minimal-blue"
+                               type="checkbox" name="backup" id="backup" value="backup_node"
+                               {% if node.is_backup %}
+                               checked="checked" disabled
+                               {% endif %}>
+                        <label style="padding-left:20px;" for="backup">Backup/Replication Service </label><br>
+
+                        <div class="box-footer">
+                            <button type="submit" class="btn btn-primary pull-right" value="submit"
+                                    {% if node.is_storage and node.is_iscsi %}
+                                    {% if node.is_backup %}
+                                    disabled
+                                   {% endif %} {% endif %}>Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Manage Node','Manage Roles')}}
+{% endblock %}
+
+
+{% block js%}
+<script>
+</script>
+{% endblock %}

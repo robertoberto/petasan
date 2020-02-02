@@ -1,0 +1,8 @@
+[Unit]
+Description= PetaSAN Web Management and Administration
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/services/web/admin.py
+Restart=always
+RestartSec=3

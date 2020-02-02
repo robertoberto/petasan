@@ -1,0 +1,333 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block title %}<title>Cluster Benchmark</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-line-chart"></i> Cluster Benchmark </li>
+    <li><i class="fa fa-line-chart"></i> Benchmark </li>
+</ol>
+{% endblock %}
+{% block content_header %}Cluster Benchmark{% endblock %}
+{% block content %}
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box">
+                <div class="box-body">
+                    {{ macros.message(gettext(err), gettext(success), gettext(warning), gettext(info)) }}
+
+                    <div id="error_div" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="alert alert-danger alert-dismissable">
+                                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                    </button>
+                                    <h4><i class="icon fa fa-ban"></i> Alert!</h4>
+                                    <h5 id="message_error"></h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <!--  which test -->
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label id="lbl_test" for="test">
+                                <i class=""></i>Test:<font color="red">*</font>
+                            </label>
+                            <select class="form-control" name="test" id="test">
+                                <option value="2" selected>4K IOPS rados benchmark</option>
+                                <option value="1">4M Throughput rados benchmark</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <!--  pools -->
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label id="lbl_pool" for="pool">
+                                <i class=""></i>Pool:<font color="red">*</font>
+                            </label>
+
+                            <select class="form-control" name="pool" id="pool" required="required">
+                                {% if pools_list and pools_list|length != 0 %}
+                                {% for name in pools_list %}
+                                <option value="{{ name }}" name="{{ name }}">{{ name }}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+
+                        </div>
+                    </div>
+
+
+
+
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <!--  number of threads -->
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label id="lbl_threads" for="threads">
+                                <i class=""></i>Threads per Client:<font color="red">*</font>
+                            </label>
+                            <select class="form-control" name="threads" id="threads">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="4">4</option>
+                                <option value="8">8</option>
+                                <option value="16" selected>16</option>
+                                <option value="32">32</option>
+                                <option value="64">64</option>
+                                <option value="128">128</option>
+                                <option value="256">256</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <!--  duration -->
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label id="lbl_duration" for="duration">
+                                <i class=""></i>Duration:<font color="red">*</font>
+                            </label>
+                            <select class="form-control" name="duration" id="duration">
+                                <option value="60" selected>1 min</option>
+                                <option value="300">5 min</option>
+                                <option value="600">10 min</option>
+
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <!--  clients -->
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <div class="col-md-5"></div>
+                    <div class="col-md-12" style="padding-left: 0px;">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label id="lbl_clients" for="clients">
+                                    <i class=""></i>Clients:<font color="red">*</font>
+                                </label>
+                                <select class="form-control" name="clients[]" id="clients" multiple>
+                                    {% for node in nodes %}
+                                    {% if node.is_storage %}
+                                    <option value="{{ node.name }}">{{ node.name }} (S)</option>
+                                    {% else %}
+                                    <option value="{{ node.name }}">{{ node.name }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <input style="position: absolute; margin-top: 10px;" class="icheckbox_minimal-blue"
+                                   type="checkbox" name="clean" id="clean" value="Clean" checked>
+                            <label style="padding-left:20px; margin-top: 6px;"> Cleanup Test Data </label>
+                        </div>
+                    </div>
+
+
+                    <div class="col-md-12" style="padding-left: 0px;">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label id="nodes_storage_lbl"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--  run button -->
+                    <div class="box-footer" id="run_btn" style="border-top: 0px;">
+                        <button type="button" name="run_test" id="run_test" class="btn btn-primary pull-right">Run
+                        </button>
+                    </div>
+
+                    <!--  loading img + Processing -->
+                    <div class="col-md-12">
+                        <div id="img" style="display: none; align-content: center; text-align: center;">
+                            <img src="/static/dist/img/credit/loading.gif"
+                                 style="height: 150px; width: 150px;">
+
+                            <p id="loading" name='loading' class="text-muted">
+
+                            <h3 class="box-title">Processing...</h3>  </p>
+                        </div>
+                    </div>
+
+
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <!--  Results Area -->
+                    <!-- ------------------------------------------------------------------------------------------ -->
+                    <div id="results" style="display: none;">
+                        <div class="col-md-4" style="padding-bottom: 15px;">
+                            <h1>Results</h1>
+
+                            <div class="box-header">
+                                <h3 class="box-title" id="cluster_title"></h3>
+                            </div>
+
+                            <div class="box-body no-padding">
+                                <table id="cluster_table" class="table table-bordered tbl_custom">
+                                    <tbody>
+                                        <tr style="background-color: #d6d3d3;">
+                                            <th style="width: 50%;">Write</th>
+                                            <th style="width: 50%;">Read</th>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12" style="padding-bottom: 15px;">
+                            <div class="box-header">
+                                <h3 class="box-title">Write Resource Load:</h3>
+                            </div>
+                            <div class="box-body no-padding">
+                                <table id="write_table" class="table table-bordered tbl_custom">
+                                    <tbody>
+                                        <tr style="background-color: #d6d3d3;">
+                                            <th rowspan="3">Node</th>
+                                            <th rowspan="3" style="width: 10%;">Memory Util%</th>
+                                            <th colspan="2" style="text-align: center;">CPU Util%</th>
+                                            <th colspan="2" style="text-align: center;">Network Util%</th>
+                                            <th colspan="4" style="text-align: center;">Disks Util%</th>
+                                            <th rowspan="3" style="width: 10%;">Actions</th>
+                                        </tr>
+
+                                        <tr style="background-color: #d6d3d3;">
+                                            <th rowspan="2">Avg</th>
+                                            <th rowspan="2">Max</th>
+                                            <th rowspan="2">Avg</th>
+                                            <th rowspan="2">Max</th>
+                                            <th colspan="2" style="text-align: center;">Journals</th>
+                                            <th colspan="2" style="text-align: center;">OSDs</th>
+                                        </tr>
+
+                                        <tr style="background-color: #d6d3d3;">
+                                            <th>Avg</th>
+                                            <th>Max</th>
+                                            <th>Avg</th>
+                                            <th>Max</th>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12" style="padding-bottom: 15px;">
+                            <div class="box-header">
+                                <h3 class="box-title">Read Resource Load:</h3>
+                            </div>
+                            <div class="box-body no-padding">
+                                <table id="read_table" class="table table-bordered tbl_custom">
+                                    <tbody>
+                                    <tr style="background-color: #d6d3d3;">
+                                        <th rowspan="3">Node</th>
+                                        <th rowspan="3" style="width: 10%;">Memory Util%</th>
+                                        <th colspan="2" style="text-align: center;">CPU Util%</th>
+                                        <th colspan="2" style="text-align: center;">Network Util%</th>
+                                        <th colspan="4" style="text-align: center;">Disks Util%</th>
+                                        <th rowspan="3" style="width: 10%;">Actions</th>
+                                    </tr>
+
+                                    <tr style="background-color: #d6d3d3;">
+                                        <th rowspan="2">Avg</th>
+                                        <th rowspan="2">Max</th>
+                                        <th rowspan="2">Avg</th>
+                                        <th rowspan="2">Max</th>
+                                        <th colspan="2" style="text-align: center;">Journals</th>
+                                        <th colspan="2" style="text-align: center;">OSDs</th>
+                                    </tr>
+
+                                    <tr style="background-color: #d6d3d3;">
+
+                                        <th>Avg</th>
+                                        <th>Max</th>
+                                        <th>Avg</th>
+                                        <th>Max</th>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="modal-default">
+                            <div class="modal-dialog" style="width: 75%;">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">×</span>
+                                        </button>
+                                        <h4 class="modal-title" id="modal_title"></h4>
+                                    </div>
+                                    <div class="modal-body" id="modal_body">
+                                    </div>
+                                    <div class="modal-footer" style="border-top: none;">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{ macros.nav('Cluster Benchmark','Benchmark') }}
+{% endblock %}
+
+
+{% block js %}
+<script src="/static/dist/js/pages/benchmark/benchmark_form.js?v=7777777"></script>
+
+<script>
+    var process_id, interval, report_result;
+    var messages = {}
+    messages.run_test_error = '{{ gettext("ui_admin_benchmark_test_error") }}';
+    messages.test_report_none = '{{ gettext("ui_admin_benchmark_test_report_none") }}';
+    messages.nodes_storage_message = '{{ gettext("ui_admin_benchmark_nodes_storage_message") }}';
+    messages.ui_admin_benchmark_clients_empty = '{{ gettext("ui_admin_benchmark_clients_empty") }}';
+    messages.ui_admin_benchmark_clients_full = '{{ gettext("ui_admin_benchmark_clients_full") }}';
+    // check pool name //
+    messages.add_pool_lbl_name_empty = '{{ gettext("ui_admin_manage_pool_lbl_name_empty") }}';
+    // end pool //
+
+    var loginUrl = "{{ url_for('main_controller.login') }}";
+</script>
+
+{% endblock %}

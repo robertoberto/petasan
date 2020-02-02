@@ -1,0 +1,13 @@
+[Unit]
+Description= PetaSAN Start Services
+After=syslog.target local-fs.target network.target
+Before=ceph-osd@.service  ceph-mon@.service 
+
+[Service]
+Type=oneshot
+ExecStart=/opt/petasan/scripts/start_petasan_services.py
+RemainAfterExit=yes
+
+
+[Install]
+WantedBy=default.target ceph-osd@.service  ceph-mon@.service 

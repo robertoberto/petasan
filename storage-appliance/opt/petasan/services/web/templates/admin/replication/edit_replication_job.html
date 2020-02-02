@@ -1,0 +1,464 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title%}<title>Edit Replicatin Job</title>{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb">
+     <li><i class="fa fa-clone"></i> Replication</li>
+    <li><i class="fa fa-calendar"></i><a href="/replication/job_list">&nbsp; Jobs </a></li>
+    <li><i class="fa fa-edit"></i> Edit Job</li>
+</ol>
+{% endblock %}
+
+
+{% block content_header%} Edit Replication Job{% endblock %}
+{% block content %}
+
+
+<section class="content">
+    <form id="addJob_form" method="POST" action="{{ url_for('replication_controller.edit_job', job_id = selected_job.job_id) }}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-body">
+                        {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                        <div class="form-group" style="margin-left: 10px">
+                            <div>
+
+
+                            </div>
+
+                            <br>
+
+                            <div class="row">
+                                <div class=" col-md-6">
+                                    <!--  Job Name -->
+                                    <input type="hidden" id="job_id" value="{{ selected_job.job_id }}">
+                                    <div class="row">
+                                        <div class=" col-md-6">
+                                            <div class="form-group">
+
+                                                <label id="lblJobName" for="job_name" class="control-label"> Name:<font
+                                                        color="red">*</font></label>
+                                                <input id="job_name" type="text" name="job_name"
+                                                       class="form-control" autocomplete="off" value="{{ selected_job.job_name }}">
+                                            </div>
+                                        </div>
+                                        <!-- End Job Name -->
+
+
+                                    </div>
+                                    <!--  Cluster Backup Nodes -->
+                                    {% if backup_nodes and backup_nodes|length != 0 %}
+                                    <div class="row">
+                                        <div class=" col-md-6">
+                                            <div class="form-group">
+                                                <label id="lblUseNode" for="backup_node" class="control-label">Use Node:<font
+                                                        color="red">*</font></label>
+
+                                                <select id="backup_node" name="backup_node" class="form-control" >
+                                                    <option value="" selected>&nbsp;</option>
+
+                                                    {% for node in backup_nodes %}
+                                                    <option value="{{ node.name }}" name="{{ node.name }}" {% if selected_job.node_name ==  node.name  %}
+                                                    selected="selected" {% endif %}>{{ node.name
+                                                        }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {% endif %}
+
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label id="lblSchedule" class="control-label">Schedule:<font
+                                                color="red">*</font></label>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                                <textarea id="selected_schedule" rows="4.5" name="rule_body"
+                                                                          class="form-control"  readonly></textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <a href="#" data-toggle="modal"
+                                                   data-target="#schedule"
+                                                   data-controls-modal="modal-from-dom"
+                                                   data-backdrop="static"
+                                                   onclick="schedule_types(['daily' , 'weekly' , 'monthly'])"
+                                                   data-keyboard="true"
+                                                   class="glyphicon glyphicon-calendar btn btn-primary"></a>
+
+                                            </div>
+                                        </div>
+                                        <!-- New --><!-- Modal Pop-Up -->
+                                        <!-- ===================================== -->
+                                        <div class="modal fade" id="schedule" tabindex="-1"
+                                             role="dialog"
+                                             aria-labelledby="schedule" aria-hidden="true">
+
+                                            {% include "admin/schedule/view_schedule.html" %}
+                                        </div>
+                                        <!-- ======================================================================================= -->
+                                        <input id="schedule_object" name="schedule_object" value="{{ selected_job.schedule|string }}" hidden>
+
+                                    </div>
+
+
+                                </div>
+                            </div>
+                            <!-- End Cluster Backup Nodes -->
+                            <div class="row">
+                                <!-- Source Node -->
+                                <div class=" col-md-6">
+                                    <div class="form-group">
+
+                                        <div class="row">
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label class="control-label">Source Cluster Name:</label>
+                                                    {% if selected_job.source_cluster_name %}
+                                                    <input name="source_cluster" type="text" class="form-control"
+                                                           value="{{ selected_job.source_cluster_name }}"
+                                                           style="border: hidden; background: white" readonly>
+                                                    {% endif %}
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label id="lblSourceDisk" class="control-label">Source Disk:<font
+                                                            color="red">*</font></label>
+
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <input class="form-control"
+                                                                   id="source_disk" type="text"
+                                                                   name="source_disk"
+                                                                   autocomplete="off"
+                                                                   readonly value="{{selected_job.source_disk_id}}"></div>
+
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!-- End Of Source Node -->
+
+
+                                <!-- Destination Node -->
+                                <div class=" col-md-6">
+                                    <div class="form-group">
+
+                                        <div class="row">
+
+                                            <!--  Destination Cluster Name -->
+
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label id="lblDestinationName" for="dest_cluster_name"
+                                                           class="control-label">Destination Cluster
+                                                        Name:<font
+                                                                color="red">*</font></label>
+                                                    <input readonly id="dest_cluster_name" type="text"
+                                                           name="dest_cluster_name"
+                                                           class="form-control" autocomplete="off" value="{{selected_job.destination_cluster_name}}">
+                                                </div>
+                                            </div>
+
+                                            <!-- End Of Destination Cluster Name -->
+
+                                            <!--  Destination Cluster ISCSI Disk -->
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label id="lblIDestinationDisk" class="control-label">Destination Disk:<font
+                                                                color="red">*</font></label>
+
+                                                    <div class="row">
+
+
+                                                        <div class="col-md-6"><input class="form-control"
+                                                                                     id="destination_disk"
+                                                                                     type="text"
+                                                                                     name="destination_disk"
+                                                                                     autocomplete="off"
+                                                                                     readonly value="{{selected_job.destination_disk_id}}"></div>
+
+
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <!--  End Of Destination Cluster ISCSI Disk -->
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!--End Of Destination Node -->
+
+                            </div>
+
+
+                            <!------------------------------------------------------------------------------ -->
+                            <!-- Compression -->
+                            <div class="row">
+                                <div class=" col-md-4">
+                                    <div class="form-group">
+                                        <label id="lbl_Rep_Compression" class="control-label">Compression:</label>
+
+                                        <!-- Enabled & Disabled -->
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="rep_compression_mode" value="enabled"
+                                                               type="radio"
+                                                               id="rep_enabled" {% if selected_job.compression_algorithm|length > 0 %}
+                                                               checked="checked" {% endif %} >
+                                                        &nbsp;Enabled
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="rep_compression_mode" value="disabled"
+                                                               type="radio"
+                                                               id="rep_disabled" {% if selected_job.compression_algorithm|length == 0 %}
+                                                               checked="checked" {% endif %}>
+                                                        &nbsp;Disabled
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <!-- End Enabled & Disabled -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!------------------------------------------------------------------------------ -->
+                            <!-- Compression Algorithm -->
+                            <div class="row">
+                                <div class=" col-md-3" id="Rep_CompressionAlg">
+                                    <div class="form-group">
+                                        <label for="rep_compression_algorithm" class="control-label">Compression
+                                            Algorithm:<font
+                                                    color="red">*</font></label>
+
+                                        <select id="rep_compression_algorithm" name="rep_compression_algorithm"
+                                                class="form-control">
+                                            <option value="gzip" {% if
+                                                    selected_job.compression_algorithm=='gzip' %}
+                                                    selected="selected" {% endif %}>gzip</option>
+                                            <option value="lz4" {% if
+                                                    selected_job.compression_algorithm=='lz4' %}
+                                                    selected="selected" {% endif %}>lz4</option>
+                                            <option value="zstd" {% if
+                                                    selected_job.compression_algorithm=='zstd' %}
+                                                    selected="selected" {% endif %}>zstd</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Compression Algorithm -->
+                            <!------------------------------------------------------------------------------ -->
+
+
+                            <!------------ Advanced Options ------------->
+
+                            <div class=" box box-default" id="test"
+                                 style="border: none; box-shadow: none;">
+                                <div class="box-header with-border" style="border: none;">
+                                    <div class="box-tools pull-right" style="right: 0px; left: -7px; top: 6px;">
+                                        <button type="button" class="btn btn-box-tool btn_collapse"><i
+                                                id="mark" class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <h4 class="box-title" id="box_details_title"
+                                        style="font-weight: 700; font-size: 14px;">
+                                        Advanced
+                                    </h4>
+                                </div>
+                                <div id="demo" class="box-body collapse">
+                                    <div class="form-group">
+                                        <label>Pre Snapshot Script URL:
+                                            <i data-toggle="tooltip"
+                                               title='{{ gettext("ui_admin_pre_snap_script_label_tooltip") }}'
+                                               class="fa fa-fw fa-info-circle"></i></label>
+
+                                        <input id="pre_snap_script" type="text" name="pre_snap_script"
+                                               class="form-control" autocomplete="off" value="{{selected_job.pre_snap_url}}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Post Snapshot Script URL:
+                                            <i data-toggle="tooltip"
+                                               title='{{ gettext("ui_admin_post_snap_script_label_tooltip") }}'
+                                               class="fa fa-fw fa-info-circle"></i></label>
+                                        <input id="post_snap_script" type="text" name="post_snap_script"
+                                               class="form-control" autocomplete="off" value="{{selected_job.post_snap_url}}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Post Job Complete URL:
+                                            <i data-toggle="tooltip"
+                                               title='{{ gettext("ui_admin_post_job_complete_label_tooltip") }}'
+                                               class="fa fa-fw fa-info-circle"></i></label>
+                                        <input id="post_job_complete" type="text" name="post_job_complete"
+                                               class="form-control" autocomplete="off" value="{{selected_job.post_job_complete}}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!------------------- End Advanced Options-------------------->
+
+
+                            <!-- Buttons : Save & Cancel -->
+                            <br>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="box-footer">
+
+                                        <button type="submit" class="btn btn-primary pull-right " value="submit">Save
+                                        </button>
+
+                                        <button type="button" style="margin-right: 10px"
+                                                class="btn btn-default pull-right" id="cancelBtn" value="cancel">Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Buttons : Save & Cancel-->
+                            <input id="source_disk_size" type="text" hidden>
+                            <input type="destination_disk_size" hidden>
+                            <input type="text" value="" hidden>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('ScheduleJobs','Backup')}}
+{% endblock %}
+
+{% block js%}
+<script>
+    // Check which radiobutton ( of "Replicated Compression" : "Enabled" or "Disabled") is selected before
+    // refreshing the page to keep the selection after refreshing
+    // ============================================================================================================ //
+
+    if ($('#rep_disabled').is(':checked')) {
+        $("#Rep_CompressionAlg").hide();
+    }
+
+    if ($('#rep_enabled').is(':checked')) {
+        $("#Rep_CompressionAlg").show();
+    }
+
+
+</script>
+
+<script src="/static/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script src="/static/dist/js/pages/schedule/select_schedule.js?v=7777777"></script>
+<script src="/static/dist/js/pages/replication/edit_job.js?v=7777777"></script>
+
+<script>
+    var path = "{{url_for('replication_controller.job_list')}}";
+    set_cancel_add_job(path);
+
+    var messages = {};
+    messages.edit_job_lbl_name_empty = '{{ gettext("ui_admin_job_lbl_name_empty") }}';
+    messages.edit_job_lbl_Use_node_null = '{{ gettext("ui_admin_job_lbl_Use_node_null") }}';
+    messages.edit_job_lbl_src_iscsi_empty = '{{ gettext("ui_admin_job_lbl_src_iscsi_empty") }}';
+    messages.edit_job_lbl_dest_cluster_name_empty = '{{ gettext("ui_admin_job_lbl_dest_cluster_name_empty") }}';
+    messages.edit_job_lbl_dest_cluster_ip_empty = '{{ gettext("ui_admin_job_lbl_dest_cluster_ip_empty") }}';
+    messages.edit_job_lbl_dest_cluster_pass_empty = '{{ gettext("ui_admin_job_lbl_dest_cluster_pass_empty") }}';
+    messages.edit_job_lbl_dest_iscsi_empty = '{{ gettext("ui_admin_job_lbl_dest_iscsi_empty") }}';
+    messages.edit_job_lbl_schedule_required = '{{ gettext("ui_admin_job_lbl_schedule_required") }}';
+    messages.add_job_lbl_name_no_special_char = '{{ gettext("ui_admin_manage_job_lbl_special_char") }}';
+
+
+    var messages_schedule = {};
+    messages_schedule.schedule_error_msgs = '{{ gettext("ui_admin_schedule_error_msgs") }}';
+    messages_schedule.schedule_error_at_time_field = '{{ gettext("ui_admin_schedule_error_at_time_field") }}';
+    messages_schedule.schedule_error_frequently_type = '{{ gettext("ui_admin_schedule_error_frequently_type") }}';
+    messages_schedule.schedule_error_every_field = '{{ gettext("ui_admin_schedule_error_every_field") }}';
+    messages_schedule.schedule_error_frequently_daily_type = '{{ gettext("ui_admin_schedule_error_frequently_daily_type") }}';
+    messages_schedule.schedule_error_frequently_week_days = '{{ gettext("ui_admin_schedule_error_frequently_week_days") }}';
+    messages_schedule.schedule_error_frequently_month_days = '{{ gettext("ui_admin_schedule_error_frequently_month_days") }}';
+    messages_schedule.schedule_error_frequently_first_day_of_month = '{{ gettext("ui_admin_schedule_error_frequently_first_day_of_month") }}';
+    messages_schedule.schedule_error_frequently_month_type = '{{ gettext("ui_admin_schedule_error_frequently_month_type") }}';
+
+</script>
+<script>
+
+$(document).ready(function () {
+
+
+
+    var job_id = $('#job_id').val();
+
+    $.ajax({
+        url: "/replication/get_job/" + job_id,
+        type: "get",
+        success: function (data) {
+            var schedule = JSON.parse(data);
+            global_schedule = schedule;
+            var selected_schedule = get_text(schedule);
+            $('#selected_schedule').html(selected_schedule);
+
+
+        },
+        error: function () {
+            console.log("error")
+        }
+
+
+    });
+});
+
+</script>
+
+{% endblock %}

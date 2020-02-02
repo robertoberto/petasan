@@ -1,0 +1,12 @@
+diff -upr -x '*.[^ch]' a/drivers/block/rbd.c b/drivers/block/rbd.c
+--- a/drivers/block/rbd.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/block/rbd.c	2018-07-19 10:03:01.000000000 +0200
+@@ -666,7 +666,7 @@ struct rbd_options {
+ 	bool	exclusive;
+ };
+ 
+-#define RBD_QUEUE_DEPTH_DEFAULT	BLKDEV_MAX_RQ
++#define RBD_QUEUE_DEPTH_DEFAULT	1024
+ #define RBD_READ_ONLY_DEFAULT	false
+ #define RBD_LOCK_ON_READ_DEFAULT false
+ #define RBD_EXCLUSIVE_DEFAULT	false

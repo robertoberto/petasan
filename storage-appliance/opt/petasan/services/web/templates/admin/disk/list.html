@@ -1,0 +1,408 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+
+{% endblock %}
+
+{% block title %}<title>iSCSI Disks</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-server"></i> Manage iSCSI Disks</li>
+    <li><i class="fa fa-list"></i> iSCSI Disks</li>
+</ol>
+{% endblock %}
+{% block content_header %}iSCSI Disks{% endblock %}
+{% block content %}
+<style>
+
+    #diskList td a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: #000000;
+    }
+
+    #diskList td a:hover {
+        color: #000000;
+    }
+
+    #diskList td a:active {
+        color: #000000;
+    }
+
+    #diskList td a:visited {
+        color: #000000;
+    }
+
+</style>
+<style>
+    .tooltip-inner {
+        text-align: left;
+    }
+</style>
+
+<section class="content">
+
+    <div class="row">
+
+        <div class="col-xs-12">
+
+            <div class="box">
+
+                <!-- /.box-header -->
+                <div class="box-body">
+                    {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+
+                    <!-- =================== -->
+                    <!-- Add New Disk Button -->
+                    <!-- =================== -->
+                    <br>
+
+                    <div>
+                        <form method="POST" action="{{ url_for('disk_controller.add_disk') }}" id="add_disk">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Add iSCSI Disk
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- ========================== -->
+                    <!-- End Of Add New Disk Button -->
+                    <!-- ========================== -->
+
+                    <!-- ####################################################################################### -->
+                    <br>
+                    <!-- ####################################################################################### -->
+
+                    <table id="diskList" class="table table-bordered table-striped table-align-mid ">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Disk Id</th>
+                            <th>Size</th>
+                            <th>Name</th>
+                            <th>Created</th>
+                            <th>Pool</th>
+                            <th>IQN</th>
+                            <th>Active Paths</th>
+                            {#
+                            <th>Path 1</th>
+                            #}
+                            {#
+                            <th>Path 2</th>
+                            #}
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% if diskList %}
+                        {% for disk in diskList %}
+                        <tr class="disk">
+                            <td valign="top">
+                                <input type="hidden" id="{{disk.id}}" value="{{disk.replication_info['dest_cluster_fsid']}}">
+
+                                {% if disk.replication_info|length > 0 %} <i class="fa fa-clone" data-toggle="tooltip"
+                                                                             data-placement="right" data-html="true"
+                                {% if disk.replication_info['dest_cluster_fsid'] == cluster_fsid and disk.replication_info['dest_disk_id'] == disk.id %}
+                                title="<p style='text-align: left'>Disk is destination of replication job
+                                <br>Source Cluster: {{ disk.replication_info['src_cluster_name'] }} <br>
+                                Disk ID: {{ disk.replication_info['src_disk_id'] }}<br>
+                                Disk Name: {{ disk.replication_info['src_disk_name'] }} <br></p>"
+                                {% elif disk.replication_info['src_cluster_fsid'] == cluster_fsid and disk.replication_info['src_disk_id'] == disk.id %}
+                                title="Disk is source of replication job <br>
+                                Destination Cluster: {{ disk.replication_info['dest_cluster_name'] }} <br>
+                                Disk ID: {{ disk.replication_info['dest_disk_id'] }}
+                                <br> Disk Name: {{ disk.replication_info['dest_disk_name'] }} <br>"
+                                {% endif %}></input> {% endif %}
+                            </td>
+                            <td class="id" valign="center"><a href="#" data-toggle="modal" data-target="#exampleModal"
+                                                              onclick="return loadDiskInfo('{{ disk.id }}' , '{{ disk.pool }}')">{{
+                                disk.id }}</a></td>
+                            {% if (disk.size >= 1024) %}
+                            <td><a href="#" data-toggle="modal" data-target="#exampleModal" class="{{ disk.id }}"
+                                   name="{{ disk.pool }}"
+                                   onclick="return loadDiskInfo('{{ disk.id }}' , '{{ disk.pool }}')">{{ '%d' |
+                                format(disk.size / 1024) }} TB</a></td>
+                            {% else %}
+                            <td><a href="#" data-toggle="modal" data-target="#exampleModal"
+                                   onclick="return loadDiskInfo('{{ disk.id }}' , '{{ disk.pool }}')">{{ disk.size }}
+                                GB</a></td>
+                            {% endif %}
+
+                            <td class="name"><a href="#" data-toggle="modal" data-target="#exampleModal"
+                                                onclick="return loadDiskInfo('{{ disk.id }}' , '{{ disk.pool }}')">{{
+                                disk.disk_name }}</a></td>
+                            <td><a href="#" data-toggle="modal" data-target="#exampleModal"
+                                   onclick="return loadDiskInfo('{{ disk.id }}' , '{{ disk.pool }}')">{{
+                                disk.create_date }}</a></td>
+                            <td class="pool"><a href="#" data-toggle="modal" data-target="#exampleModal"
+                                                onclick="return loadDiskInfo('{{ disk.id }}' , '{{ disk.pool }}')">{{
+                                disk.pool }} {% if disk.data_pool is not none and disk.data_pool != 'None' %} {% if
+                                disk.data_pool|length > 0 %} + {{ disk.data_pool}} {% endif %} {% endif %}</a></td>
+                            <td><a href="#" data-toggle="modal" data-target="#exampleModal"
+                                   onclick="return loadDiskInfo('{{ disk.id }}' , '{{ disk.pool }}')">{{ disk.iqn }}</a>
+                            </td>
+                            <td>
+                                <div class="btn-group ">
+                                    {% if disk.paths|length == 0 %}
+                                    <u>N/A</u>
+                                    {% else %}
+                                    <a id="activePaths" href="#" data-toggle="modal" data-target="#myModal"
+                                       onclick="return setDiskUrl('{{ url_for('disk_controller.get_disk_paths',disk_id=disk.id , pool = disk.pool) }}')"><u>{{
+                                        disk.paths|length }}</u></a>
+                                    {% endif %}
+
+                                </div>
+                                <div class="modal" id="myModal">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal"
+                                                        aria-label="Close">
+                                                    <span aria-hidden="true">X</span></button>
+                                                <h4 class="modal-title">Active Paths</h4>
+                                            </div>
+
+
+                                            <div class="box-body">
+                                                <div id="img"
+                                                     style="display: block; align-content: center; text-align: center;">
+
+                                                    <img src="/static/dist/img/credit/loading.gif"
+                                                         style="height: 50px; width: 50px;">
+
+                                                    <p id="loading" name='loading' class="text-muted">
+
+                                                    <h3 class="box-title">Loading</h3>  </p>
+                                                </div>
+
+                                                <table class="table table-bordered table-striped"
+                                                       id="activePathsTable" style="display: none">
+                                                    <tbody id="diskID" style="display: none;">
+                                                    <h4 id="modal" class="modal-title"></h4>
+
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default pull-right"
+                                                        data-dismiss="modal">Close
+                                                </button>
+
+                                            </div>
+                                        </div>
+                                        <!-- /.modal-content -->
+                                    </div>
+                                    <!-- /.modal-dialog -->
+                                </div>
+                            </td>
+                            {#
+                            <td>{{ disk.ip }}</td>
+                            #}
+                            {#
+                            <td>{{ disk.ip2 }}</td>
+                            #}
+                            <td id="statusID_{{ disk.id }}">
+                                {% if disk.status == diskStatus.deleting %}
+                                <span class="badge bg-pending">Deleting</span>
+                                {% elif disk.status == diskStatus.started %}
+                                <span class="badge bg-started">Started</span>
+                                {% elif disk.status == diskStatus.stopped %}
+                                <span class="badge bg-stop">Stopped</span>
+                                {% elif disk.status == diskStatus.unattached %}
+                                <span class="badge bg-unAttached">Detached</span>
+                                {% elif disk.status == diskStatus.stopping %}
+                                <span class="badge bg-pending">Stopping</span>
+                                {% elif disk.status == diskStatus.starting %}
+                                <span class="badge bg-pending">Starting</span>
+                                {% endif %}
+                                <input type="hidden" class="status" id="disk_status_{{ disk.id }}"
+                                       value="{{ disk.status }}">
+                            </td>
+                            <td class="action" id="actionID_{{ disk.id }}">
+                                {% if disk.status == diskStatus.started %}
+                                <div title="Stop" class="btn-group ">
+                                    <form action="{{ url_for('disk_controller.stop_disk', disk_id =disk.id) }}"
+                                          method="post">
+                                        <input type="hidden" id="pageID" name="pageID" value="{{ pageID }}">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-stop"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% elif disk.status == diskStatus.stopped %}
+                                <div title="Start" class="btn-group ">
+                                    <form action="{{ url_for('disk_controller.start_disk', disk_id =disk.id, pool = disk.pool) }}"
+                                          method="post">
+                                        <button type="submit" class="btn btn-default"
+                                                onclick="return doStart('{{ disk.replication_info['dest_cluster_fsid'] }}','{{ disk.disk_name }}','{{ cluster_fsid }}')">
+                                            <i class="fa fa-play"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div title="Edit" class="btn-group ">
+                                    <form action="{{ url_for('disk_controller.edit_disk', disk_id =disk.id, pool = disk.pool) }}"
+                                          method="post">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div title="Delete" class="btn-group ">
+                                    <form action="{{ url_for('disk_controller.remove_disk', disk_id =disk.id, pool = disk.pool) }}"
+                                          method="post">
+                                        <button type="submit" class="btn btn-default"
+                                                onclick="return doDelete('{{ disk.disk_name }}' , '{{ disk.id }}', '{{ disk.replication_info|length }}');">
+                                            <i class="fa fa-remove"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div title="Detach" class="btn-group ">
+                                    <form action="{{ url_for('disk_controller.detach_disk', disk_id =disk.id, pool = disk.pool) }}"
+                                          method="post">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-chain-broken"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% elif disk.status == diskStatus.unattached %}
+                                <div title="Attach" class="btn-group ">
+                                    <form action="{{ url_for('disk_controller.attach_disk', disk_id =disk.id, pool = disk.pool) }}"
+                                          method="post">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-chain"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div title="Delete" class="btn-group ">
+                                    <form action="{{ url_for('disk_controller.remove_disk', disk_id =disk.id, pool = disk.pool) }}"
+                                          method="post">
+                                        <button type="submit" class="btn btn-default"
+                                                onclick="return doDelete('{{ disk.disk_name }}' , '{{ disk.id }}', '{{ disk.replication_info|length }}');">
+                                            <i class="fa fa-remove"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                        </tbody>
+                    </table>
+                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                         aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                        {% include "admin/disk/view_disk.html" %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<input type="hidden" id="messages" value="{{ gettext('ui_admin_delete_disk_confirm_mesg') }}">
+<!-- delete disk -->
+<input type="hidden" id="messages3" value="{{ gettext('ui_admin_pool_delete_in_progress') }}">
+<input type="hidden" id="messages4" value="{{ gettext('ui_admin_disk_delete_snapshots') }}">
+<input type="hidden" id="messages5" value="{{ gettext('ui_admin_disk_start_replicated') }}">
+<input type="hidden" id="base_url" value="{{ base_url }}">
+<input type="hidden" id="delete_job_id" value="{{ delete_job_id }}">
+<input type="hidden" id="disk" value="{{ disk_id }}">
+<input type="hidden" id="pool" value="{{ pool }}">
+<input type="hidden" id="cluster_fsid" value="{{cluster_fsid}}">
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{ macros.nav('Manage iSCSI Disks','iSCSI Disk List') }}
+{% endblock %}
+
+
+{% block js %}
+
+<script src="/static/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/dist/js/pages/disk/list.js?v=7777777"></script>
+
+<script>
+
+    $(function () {
+        $("#diskList").DataTable({
+            "order": [[1, "asc"]],
+            "columnDefs": [
+                {
+                    "orderable": false, "targets": [0, 5, 6, 7, 8, 9]
+                }]
+//            "columnDefs": [
+//                {"orderable": false, "targets": [5, 6, 7, 8]}
+//            ]
+        });
+    });
+
+    var messages = $("#messages").val();
+
+    // delete disk //
+    var messages3 = $("#messages3").val();
+    var messages4 = $("#messages4").val();
+
+    function doDelete(disk_name, disk_id, replication_info_len) {
+
+        var confirm_var;
+        var final_message;
+        var delete_message = messages;
+        if (parseInt(replication_info_len) > 0) {
+            delete_message = messages4;
+        }
+        if (disk_name != "") {
+            final_message = delete_message.replace('$', disk_name);
+            confirm_var = confirm(final_message);
+        }
+        else {
+            final_message = delete_message.replace('$', '');
+            confirm_var = confirm(final_message);
+        }
+        return confirm_var == true;
+
+    }
+
+
+    var url_stop = "{{ url_for('disk_controller.stop_disk',disk_id='')}}";
+    var url_start = "{{ url_for('disk_controller.start_disk',disk_id='', pool='')}}";
+    var url_edit = "{{ url_for('disk_controller.edit_disk',disk_id='', pool='')}}";
+    var url_remove = "{{ url_for('disk_controller.remove_disk',disk_id='', pool='')}}";
+    var url_detach = "{{ url_for('disk_controller.detach_disk',disk_id='', pool='')}}";
+    var url_attach = "{{ url_for('disk_controller.attach_disk',disk_id='', pool='')}}";
+
+    manage_status(url_stop, url_start, url_edit, url_remove, url_detach, url_attach);
+    var loginUrl = "{{ url_for('main_controller.login') }}";
+
+</script>
+
+{% endblock %}

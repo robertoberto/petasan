@@ -1,0 +1,11 @@
+--- a/drivers/target/target_core_xcopy.h	2018-08-23 12:02:38.000000000 +0200
++++ b/drivers/target/target_core_xcopy.h	2019-01-14 14:10:20.000000000 +0200
+@@ -4,7 +4,7 @@
+ #define XCOPY_TARGET_DESC_LEN		32
+ #define XCOPY_SEGMENT_DESC_LEN		28
+ #define XCOPY_NAA_IEEE_REGEX_LEN	16
+-#define XCOPY_MAX_SECTORS		1024
++#define XCOPY_MAX_SECTORS		8192
+ 
+ /*
+  * SPC4r37 6.4.6.1

@@ -1,0 +1,194 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title%}<title>Destination Clusters</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-clone"></i> Replication</li>
+    <li><i class="fa fa-desktop"></i> Destination Clusters</li>
+</ol>
+{% endblock %}
+{% block content_header%}Destination Clusters{% endblock %}
+{% block content %}
+<!-- New --><!-- Style added for the linkable rows in the table -->
+<!-- ========================================================== -->
+<style>
+
+    #clusterList td  a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: #000000;
+    }
+
+    #clusterList td  a:hover {
+      color: #000000;
+    }
+
+    #clusterList td  a:active {
+      color: #000000;
+    }
+
+    #clusterList td  a:visited {
+      color: #000000;
+    }
+
+</style>
+<!-- ============================================== -->
+
+<section class="content">
+
+    <div class="row">
+
+        <div class="col-xs-12">
+
+            <div class="box">
+
+                <!-- /.box-header -->
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                    <!-- =================== -->
+                    <!-- Add New Destination Button -->
+                    <!-- =================== -->
+                    <br>
+
+                    <div>
+                        <form method="POST" action="{{ url_for('destination_cluster_controller.add_dest_cluster') }}" id="add_user">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Add Destination Cluster
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- ========================== -->
+                    <!-- End Of Add New Destination Button -->
+                    <!-- ========================== -->
+
+                    <!-- ####################################################################################### -->
+                    <br>
+                    <!-- ####################################################################################### -->
+
+
+                    <table style="width:100%" id="clusterList" class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>Cluster Name</th>
+                            <th>Remote IP</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        {% if dest_cluster_list %}
+
+                            <!-- table body -->
+                            <!-- ---------- -->
+                            <tbody>
+                            {% for dest_cluster_name , dest_cluster_entity in dest_cluster_list.items() %}
+                        <tr>
+
+                            <td>
+                                    <a id="clusterName" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_dest_cluster_info('{{ url_for('destination_cluster_controller.view_dest_cluster_details', cluster_name = dest_cluster_entity.cluster_name) }}')">{{
+                                        dest_cluster_entity.cluster_name }}</a>
+                                </td>
+                            <td>
+                                    <a id="remoteIp" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_dest_cluster_info('{{ url_for('destination_cluster_controller.view_dest_cluster_details', cluster_name = dest_cluster_entity.cluster_name) }}')">{{
+                                        dest_cluster_entity.remote_ip }}</a>
+                                </td>
+                            <td>
+                                <div title="Edit" class="btn-group ">
+                                    <form action="{{ url_for('destination_cluster_controller.view_dest_cluster',cluster_name=dest_cluster_entity.cluster_name) }}"
+                                          method="post">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div title="Delete" class="btn-group ">
+                                    <form action="{{ url_for('destination_cluster_controller.delete_dest_cluster',cluster_name=dest_cluster_entity.cluster_name) }}"
+                                          method="post">
+                                        <button onclick="return doDelete('{{dest_cluster_entity.cluster_name}}');" type="submit"
+                                                class="btn btn-default">
+                                            <i class="fa fa-remove"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                            {% endfor %}
+                            {%endif%}
+
+                        </tbody>
+                    </table>
+                                            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                            {% include "admin/replication/destination_clusters/destination_cluster_details.html" %}
+
+                        </div>
+
+                        <!-- New --><!-- End Of Modal Of Rule Info Pop-Up  -->
+                        <!-- ======================================================================================= -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<input type="hidden" id="messages" value="{{ gettext('ui_admin_delete_dest_cluster_confirm_mesg') }}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('ScheduleJobs','ReplicationClusters')}}
+{% endblock %}
+l
+
+{% block js%}
+
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script>
+    $(function () {
+        $("#clusterList").DataTable({
+            "columnDefs": [
+                {"orderable": false, "targets": [2]}
+            ]
+        });
+    });
+
+    var messages = $("#messages").val();
+    function doDelete(user_name) {
+        var final_message = messages.replace('$', user_name);
+        var confirm_var = confirm(final_message);
+        if (confirm_var == true) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+</script>
+<script src="/static/dist/js/pages/replication/destination_cluster/view_dest_clusters.js?77777777777"></script>
+{% endblock %}

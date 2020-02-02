@@ -1,0 +1,71 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+<!-- Modal -->
+
+<div class="modal-dialog modal-lg" role="document" style="width:95%;">
+    <div class="modal-content">
+
+        <!-- Modal Header -->
+        <!-- ============ -->
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true"> X </span>
+            </button>
+            <h4 class="modal-title"> Active Replication Jobs </h4>
+        </div>
+
+        <!--  Modal Body  -->
+        <!-- ============ -->
+        <div class="modal-body">
+            <div class="box-body">
+
+                <!--  The div of the "loading.gif" image  -->
+                <div id="img" style="display: block; align-content: center; text-align: center;">
+
+                    <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+
+                    <p id="loading" name='loading' class="text-muted">
+
+                    <h3 class="box-title"> Loading </h3>
+                    </p>
+
+                </div>
+
+                <div id="active_jobs_area" style="display: none">
+
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <!-- ============ -->
+        <div class="modal-footer">
+            <button type="button" onclick="" class="btn btn-primary"
+                    data-dismiss="modal">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+<script>
+    var url_cancel_job = "{{ url_for('replication_controller.cancel_job', job_id = '') }}";
+
+    var confirm_delete_msg = '{{ gettext("ui_admin_delete_active_job_mesg") }}';
+</script>
+
+<script src="/static/dist/js/pages/replication/active_jobs.js?v=7777777"></script>

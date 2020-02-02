@@ -1,0 +1,28 @@
+diff -uprN a/src/ceph-volume/ceph_volume/devices/lvm/zap.py b/src/ceph-volume/ceph_volume/devices/lvm/zap.py
+--- a/src/ceph-volume/ceph_volume/devices/lvm/zap.py	2019-07-22 15:40:52.061999979 +0200
++++ b/src/ceph-volume/ceph_volume/devices/lvm/zap.py	2019-07-22 15:41:01.274000418 +0200
+@@ -9,6 +9,7 @@ from ceph_volume.api import lvm as api
+ from ceph_volume.util import system, encryption, disk, arg_validators
+ from ceph_volume.util.device import Device
+ from ceph_volume.systemd import systemctl
++from ceph_volume import conf
+ 
+ logger = logging.getLogger(__name__)
+ mlogger = terminal.MultiLogger(__name__)
+@@ -130,8 +131,14 @@ class Zap(object):
+         dmcrypt_uuid = lv.lv_uuid
+         dmcrypt = lv.encrypted
+         if system.path_is_mounted(lv_path):
+-            mlogger.info("Unmounting %s", lv_path)
+-            system.unmount(lv_path)
++
++            # make sure osd belongs to the current cluster
++            lv_tag_fsid = lv.tags.get('ceph.cluster_fsid')
++            current_fsid = conf.ceph.get('global', 'fsid')
++            if lv_tag_fsid == current_fsid:
++                mlogger.info("cluster fsid is valid")
++                mlogger.info("Unmounting %s", lv_path)
++                system.unmount(lv_path)
+         if dmcrypt and dmcrypt_uuid:
+             self.dmcrypt_close(dmcrypt_uuid)
+ 

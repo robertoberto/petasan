@@ -1,0 +1,53 @@
+diff -upr a/systemd/ceph-mds@.service.in b/systemd/ceph-mds@.service.in
+--- a/systemd/ceph-mds@.service.in	2019-04-25 20:15:48.000000000 +0200
++++ b/systemd/ceph-mds@.service.in	2019-07-17 02:16:24.000000000 +0200
+@@ -1,7 +1,7 @@
+ [Unit]
+ Description=Ceph metadata server daemon
+-After=network-online.target local-fs.target time-sync.target
+-Wants=network-online.target local-fs.target time-sync.target
++After=network-online.target local-fs.target time-sync.target petasan-start-services.service
++Wants=network-online.target local-fs.target time-sync.target petasan-start-services.service
+ PartOf=ceph-mds.target
+ 
+ [Service]
+diff -upr a/systemd/ceph-mgr@.service.in b/systemd/ceph-mgr@.service.in
+--- a/systemd/ceph-mgr@.service.in	2019-04-25 20:15:48.000000000 +0200
++++ b/systemd/ceph-mgr@.service.in	2019-07-17 02:16:53.000000000 +0200
+@@ -1,7 +1,7 @@
+ [Unit]
+ Description=Ceph cluster manager daemon
+-After=network-online.target local-fs.target time-sync.target
+-Wants=network-online.target local-fs.target time-sync.target
++After=network-online.target local-fs.target time-sync.target petasan-start-services.service
++Wants=network-online.target local-fs.target time-sync.target petasan-start-services.service
+ PartOf=ceph-mgr.target
+ 
+ [Service]
+diff -upr a/systemd/ceph-mon@.service.in b/systemd/ceph-mon@.service.in
+--- a/systemd/ceph-mon@.service.in	2019-04-25 20:15:48.000000000 +0200
++++ b/systemd/ceph-mon@.service.in	2019-07-17 02:17:09.000000000 +0200
+@@ -5,8 +5,8 @@ Description=Ceph cluster monitor daemon
+ #   http://www.freedesktop.org/wiki/Software/systemd/NetworkTarget
+ # these can be removed once ceph-mon will dynamically change network
+ # configuration.
+-After=network-online.target local-fs.target time-sync.target
+-Wants=network-online.target local-fs.target time-sync.target
++After=network-online.target local-fs.target time-sync.target petasan-start-services.service
++Wants=network-online.target local-fs.target time-sync.target petasan-start-services.service
+ 
+ PartOf=ceph-mon.target
+ 
+diff -upr a/systemd/ceph-osd@.service.in b/systemd/ceph-osd@.service.in
+--- a/systemd/ceph-osd@.service.in	2019-04-25 20:15:48.000000000 +0200
++++ b/systemd/ceph-osd@.service.in	2019-07-17 02:17:39.000000000 +0200
+@@ -1,7 +1,7 @@
+ [Unit]
+ Description=Ceph object storage daemon osd.%i
+-After=network-online.target local-fs.target time-sync.target ceph-mon.target
+-Wants=network-online.target local-fs.target time-sync.target
++After=network-online.target local-fs.target time-sync.target ceph-mon.target petasan-start-services.service
++Wants=network-online.target local-fs.target time-sync.target petasan-start-services.service
+ PartOf=ceph-osd.target
+ 
+ [Service]

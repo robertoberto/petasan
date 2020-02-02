@@ -1,0 +1,226 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% import 'admin/macros.html' as macros %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="expires" content="-1" />
+    <meta http-equiv="pragma" content="no-cache" />
+
+      {% block title%}<title>PetaSAN</title>{% endblock %}
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Bootstrap 3.3.5 -->
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/static/bootstrap/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="/static/dist/css/AdminLTE.min.css">
+
+    <link rel="stylesheet" href="/static/dist/css/skins/skin-purple.min.css">
+      <link rel="stylesheet" href="/static/dist/css/custom.css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="/static/bootstrap/js/html5shiv.min.js"></script>
+      <script src="/static/bootstrap/js/respond.min.js"></script>
+      <![endif]-->
+      <!-- jQuery 2.1.4 -->
+    <script src="/static/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+    <!-- Bootstrap 3.3.5 -->
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- SlimScroll -->
+    <script src="/static/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+    <!-- FastClick -->
+    <script src="/static/plugins/fastclick/fastclick.min.js"></script>
+ <script src="/static/plugins/select2/select2.full.min.js"></script>
+    <!-- InputMask -->
+      {% block head%}{% endblock %}
+
+
+  </head>
+  <style>
+    body
+    {
+        padding-right: 0px !important;
+    }
+</style>
+  <body class="hold-transition  skin-purple sidebar-mini  sidebar-collapse sidebar-toggle">
+    <!-- Site wrapper -->
+    <div class="wrapper">
+
+      <header class="main-header">
+        <!-- Logo -->
+        <!-- <a href="/" class="logo"> -->
+          <!-- mini logo for sidebar mini 50x50 pixels -->
+     <!-- <span class="logo-mini"></span> -->
+          <!-- logo for regular state and mobile devices -->
+        <!-- <span class="logo-lg">
+            <img src="/static/dist/img/credit/PetaSAN-rev-112x27.png">
+          </span>
+        </a> -->
+
+        <!-- Header Navbar: style can be found in header.less -->
+        <nav class="navbar navbar-static-top" role="navigation">
+
+          <!-- Sidebar toggle button-->
+          <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+
+ <!-- Logo : new position-->
+            <div class="navbar-custom-menu" style="display: block;float: left;height: 50px;font-size: 20px;">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="/" style="height: 50px;">
+                          <!-- mini logo for sidebar mini 50x50 pixels -->
+                          <!-- logo for regular state and mobile devices -->
+                            <img src="/static/dist/img/credit/PetaSAN-rev-112x27.png">
+                          <!--  PetaSAN-rev-128x31 -->
+                        </a>
+                    </li>
+                </ul>
+          </div>
+
+          <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+              <!--Notifications and profile removed by mostafa to removed.txt-->
+              <!-- Control Sidebar Toggle Button
+              <li>
+                <a href="#" data-toggle="control-sidebar"><i class="fa fa-gears"></i></a>
+              </li>
+              commented by mostafa and can be replace with Sign out-->
+
+              <li>
+                <a href="/logout"><i class="fa fa-sign-out" ></i></a>
+              </li>
+            </ul>
+          </div>
+
+
+        </nav>
+      </header>
+
+      <!-- =============================================== -->
+
+      <!-- Left side column. contains the sidebar -->
+      <aside class="main-sidebar">
+        <!-- sidebar: style can be found in sidebar.less -->
+        <section class="sidebar">
+          <!-- Sidebar user panel  commented by mostafa-->
+          <!-- sidebar menu: : style can be found in sidebar.less -->
+ {% block sidebar_menu %}
+          <ul class="sidebar-menu">
+            <li class="header">MAIN NAVIGATION</li>
+            <li><a href="/documentation/index.html"><i class="fa fa-book"></i> <span>Dashboard</span></a></li>
+            <li class="treeview active">
+              <a href="#">
+                <i class="fa fa-dashboard "></i> <span>"configurtion" </span> <i class="fa fa-angle-left pull-right"></i>
+              </a>
+              <ul class="treeview-menu">
+                <li><a href="../index.html"><i class="fa fa-circle-o "></i> Dashboard v1</a></li>
+                <li class="active"><a href="/index2.html"><i class="fa fa-circle-o"></i> Dashboard v2</a></li>
+              </ul>
+            </li>
+
+            <li><a href="/documentation/index.html"><i class="fa fa-book"></i> <span>Documentation</span></a></li>
+
+          </ul>
+  {% endblock %}
+        </section>
+        <!-- /.sidebar -->
+      </aside>
+
+      <!-- =============================================== -->
+
+      <!-- Content Wrapper. Contains page content -->
+      <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+          <h1>
+            {% block content_header%}{% endblock %}
+            <small>{% block content_header_sub%}{% endblock %}</small>
+          </h1>
+            {% block breadcrumb %}
+          <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li><a href="#">Examples</a></li>
+            <li class="active">Blank page</li>
+          </ol>
+            {% endblock %}
+        </section>
+
+        <!-- Main content -->
+
+      {% block content %}{% endblock %}
+
+      </div><!-- /.content-wrapper -->
+
+      <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+          <b>Version 2.4.0</b>
+        </div>
+        <strong>Copyright 2019 PetaSAN </strong> www.petasan.org All rights reserved.
+      </footer>
+
+      <!-- Control Sidebar removed by mostafa under removed.text -->
+
+      <!-- Add the sidebar's background. This div must be placed
+           immediately after the control sidebar -->
+      <div class="control-sidebar-bg"></div>
+    </div><!-- ./wrapper -->
+
+
+
+
+    {% block js%}{% endblock %}
+    <script src="/static/dist/js/app.min.js"></script>
+
+
+  </body>
+</html>
+<!--AdminLTE-2.3.0
+The MIT License (MIT)
+
+Copyright (c) 2014-2015 almasaeed2010
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ -->

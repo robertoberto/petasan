@@ -1,0 +1,701 @@
+diff -upNr a/drivers/block/rbd.c b/drivers/block/rbd.c
+--- a/drivers/block/rbd.c	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/block/rbd.c	2019-12-08 22:42:05.253331835 +0200
+@@ -47,6 +47,7 @@
+ #include <linux/idr.h>
+ #include <linux/workqueue.h>
+ #include <linux/scatterlist.h>
++#include <linux/delay.h>
+ 
+ #include "rbd_types.h"
+ 
+@@ -639,7 +640,7 @@ struct rbd_options {
+ 	bool	exclusive;
+ };
+ 
+-#define RBD_QUEUE_DEPTH_DEFAULT	BLKDEV_MAX_RQ
++#define RBD_QUEUE_DEPTH_DEFAULT	1024
+ #define RBD_READ_ONLY_DEFAULT	false
+ #define RBD_LOCK_ON_READ_DEFAULT false
+ #define RBD_EXCLUSIVE_DEFAULT	false
+@@ -1351,11 +1352,17 @@ static void rbd_obj_request_submit(struc
+ 	ceph_osdc_start_request(osd_req->r_osdc, osd_req, false);
+ }
+ 
++static enum obj_operation_type
++rbd_img_request_op_type(struct rbd_img_request *img_request);
++
+ static void rbd_img_request_complete(struct rbd_img_request *img_request)
+ {
+ 
+ 	dout("%s: img %p\n", __func__, img_request);
+ 
++	if( rbd_img_request_op_type(img_request) != OBJ_OP_READ ) 
++		atomic_dec(&img_request->rbd_dev->inflight_write_requests);
++
+ 	/*
+ 	 * If no error occurred, compute the aggregate transfer
+ 	 * count for the image request.  We could instead use
+@@ -3040,6 +3047,9 @@ int rbd_img_request_submit(struct rbd_im
+ 			goto out_put_ireq;
+ 	}
+ 
++	if( rbd_img_request_op_type(img_request) != OBJ_OP_READ ) 
++		atomic_inc(&img_request->rbd_dev->inflight_write_requests);
++
+ out_put_ireq:
+ 	rbd_img_request_put(img_request);
+ 	return ret;
+@@ -3794,6 +3804,57 @@ out_unlock:
+ 	return result;
+ }
+ 
++static void rbd_handle_pre_snap(struct rbd_device *rbd_dev, u8 struct_v,
++				     void **p)
++{
++	u32 max_wait_sec = 5;
++	u32 sleep_ms = 100;
++	u32 count = max_wait_sec * 1000 / sleep_ms;
++	struct rbd_client_id cid = { 0 };
++	u32 flush_delay;
++
++	if (struct_v >= 2) {
++		cid.gid = ceph_decode_64(p);
++		cid.handle = ceph_decode_64(p);
++	}
++
++	flush_delay = ceph_decode_32(p);			
++	atomic_set(&rbd_dev->block_writes, 1);
++
++	while(0 < atomic_read(&rbd_dev->inflight_write_requests) ) {
++
++		pr_info("%s rbd_dev %p inflight_write_requests %ul",
++			__func__, rbd_dev, 
++			atomic_read(&rbd_dev->inflight_write_requests));
++
++		msleep(sleep_ms);
++		if(--count < 1) {
++			rbd_warn(rbd_dev,"%s timeout",__func__);
++			break;
++		}
++	}
++}
++
++void rbd_dev_wait_on_bloked_writes(struct rbd_device *rbd_dev, u32 sec)
++{
++	u32 max_wait_sec = sec;
++	u32 sleep_ms = 100;
++	u32 count = max_wait_sec * 1000 / sleep_ms;
++
++	while (rbd_dev_block_writes(rbd_dev)) {
++
++		pr_info("%s rbd_dev %p blocking", __func__, rbd_dev);
++
++		msleep(sleep_ms);
++		if(--count < 1) {
++			rbd_warn(rbd_dev,"%s timeout", __func__);
++			atomic_set(&rbd_dev->block_writes, 0);
++			break;
++		}
++	}
++}
++EXPORT_SYMBOL(rbd_dev_wait_on_bloked_writes);
++
+ static void __rbd_acknowledge_notify(struct rbd_device *rbd_dev,
+ 				     u64 notify_id, u64 cookie, s32 *result)
+ {
+@@ -3834,6 +3895,9 @@ static void rbd_acknowledge_notify_resul
+ 	__rbd_acknowledge_notify(rbd_dev, notify_id, cookie, &result);
+ }
+ 
++static void rbd_handle_scsi_pr_update(struct rbd_device *rbd_dev, u8 struct_v,
++				     void **p);
++
+ static void rbd_watch_cb(void *arg, u64 notify_id, u64 cookie,
+ 			 u64 notifier_id, void *data, size_t data_len)
+ {
+@@ -3882,12 +3946,25 @@ static void rbd_watch_cb(void *arg, u64
+ 			rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
+ 		break;
+ 	case RBD_NOTIFY_OP_HEADER_UPDATE:
++		pr_info("%s rbd_dev %p RBD_NOTIFY_OP_HEADER_UPDATE", 
++			__func__, rbd_dev);
+ 		ret = rbd_dev_refresh(rbd_dev);
+ 		if (ret)
+ 			rbd_warn(rbd_dev, "refresh failed: %d", ret);
+ 
++		atomic_set(&rbd_dev->block_writes, 0);
++		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
++		break;
++	case RBD_NOTIFY_OP_SCSI_PR_UPDATE:
++		rbd_handle_scsi_pr_update(rbd_dev, struct_v, &p);
+ 		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
+ 		break;
++	case RBD_NOTIFY_OP_PRE_SNAP:
++		pr_info("%s rbd_dev %p RBD_NOTIFY_OP_PRE_SNAP", 
++			__func__, rbd_dev);
++		rbd_handle_pre_snap(rbd_dev, struct_v, &p);
++ 		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
++ 		break;
+ 	default:
+ 		if (rbd_is_lock_owner(rbd_dev))
+ 			rbd_acknowledge_notify_result(rbd_dev, notify_id,
+@@ -4227,6 +4304,9 @@ static void rbd_queue_workfn(struct work
+ 
+ 	blk_mq_start_request(rq);
+ 
++	if (op_type != OBJ_OP_READ && rbd_dev_block_writes(rbd_dev)) 
++		rbd_dev_wait_on_bloked_writes(rbd_dev, 20);
++
+ 	down_read(&rbd_dev->header_rwsem);
+ 	mapping_size = rbd_dev->mapping.size;
+ 	if (op_type != OBJ_OP_READ) {
+@@ -5205,6 +5285,14 @@ static struct rbd_device *__rbd_dev_crea
+ 	rbd_dev->rbd_client = rbdc;
+ 	rbd_dev->spec = spec;
+ 
++	mutex_init(&rbd_dev->pr_mutex);
++	rbd_dev->pr_cached = NULL;
++	rbd_dev->pr_dirty = true;
++	rbd_dev->pr_cache_ts = jiffies;
++
++        atomic_set(&rbd_dev->inflight_write_requests, 0);
++        atomic_set(&rbd_dev->block_writes, 0);
++
+ 	return rbd_dev;
+ }
+ 
+@@ -6893,6 +6981,72 @@ static void __exit rbd_exit(void)
+ 	rbd_slab_exit();
+ }
+ 
++static void rbd_handle_scsi_pr_update(struct rbd_device *rbd_dev, u8 struct_v,
++				     void **p)
++{
++	struct rbd_client_id my_cid = rbd_get_cid(rbd_dev);
++	struct rbd_client_id cid = { 0 };
++	if (struct_v >= 2) {
++		cid.gid = ceph_decode_64(p);
++		cid.handle = ceph_decode_64(p);
++	}
++	if (rbd_cid_equal(&cid, &my_cid))
++		return;
++
++	dout("%s rbd_dev %p cid %llu-%llu\n", __func__, rbd_dev, cid.gid,
++	     cid.handle);
++
++	mutex_lock(&rbd_dev->pr_mutex);
++	/* dirty pr cache */
++	rbd_dev->pr_dirty = true;
++	mutex_unlock(&rbd_dev->pr_mutex);
++}
++
++static int __rbd_notify(struct rbd_device *rbd_dev,
++				enum rbd_notify_op notify_op,
++				struct page ***preply_pages,
++				size_t *preply_len)
++{
++	struct ceph_osd_client *osdc = &rbd_dev->rbd_client->client->osdc;
++	struct rbd_client_id cid = rbd_get_cid(rbd_dev);
++	int buf_size = 4 + 8 + 8 + CEPH_ENCODING_START_BLK_LEN;
++	char buf[buf_size];
++	void *p = buf;
++
++	dout("%s rbd_dev %p notify_op %d\n", __func__, rbd_dev, notify_op);
++
++	/* encode *LockPayload NotifyMessage (op + ClientId) */
++	ceph_start_encoding(&p, 2, 1, buf_size - CEPH_ENCODING_START_BLK_LEN);
++	ceph_encode_32(&p, notify_op);
++	ceph_encode_64(&p, cid.gid);
++	ceph_encode_64(&p, cid.handle);
++
++	return ceph_osdc_notify(osdc, &rbd_dev->header_oid,
++				&rbd_dev->header_oloc, buf, buf_size,
++				RBD_NOTIFY_TIMEOUT, preply_pages, preply_len);
++}
++
++void rbd_notify_scsi_pr_update(struct rbd_device *rbd_dev)
++{
++	struct page **reply_pages;
++	size_t reply_len;
++	int ret;
++
++	ret = __rbd_notify(rbd_dev,RBD_NOTIFY_OP_SCSI_PR_UPDATE, &reply_pages, &reply_len);
++	ceph_release_page_vector(reply_pages, calc_pages_for(0, reply_len));
++
++	if(ret) {
++		if(ret == -ETIMEDOUT)
++			rbd_warn(rbd_dev, "pr update notify timeout");
++		else {
++			rbd_warn(rbd_dev, "pr update notify failed, waiting for watchers to expire cache");
++			msleep(RBD_NOTIFY_TIMEOUT * 1000);
++		}
++	}
++}
++EXPORT_SYMBOL(rbd_notify_scsi_pr_update);
++
++
+ module_init(rbd_init);
+ module_exit(rbd_exit);
+ 
+diff -upNr a/drivers/block/rbd_types.h b/drivers/block/rbd_types.h
+--- a/drivers/block/rbd_types.h	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/block/rbd_types.h	2019-12-08 22:41:25.275703093 +0200
+@@ -37,6 +37,8 @@ enum rbd_notify_op {
+ 	RBD_NOTIFY_OP_RELEASED_LOCK      = 1,
+ 	RBD_NOTIFY_OP_REQUEST_LOCK       = 2,
+ 	RBD_NOTIFY_OP_HEADER_UPDATE      = 3,
++	RBD_NOTIFY_OP_SCSI_PR_UPDATE	 = 100,
++	RBD_NOTIFY_OP_PRE_SNAP           = 101,
+ };
+ 
+ /*
+diff -upNr a/drivers/target/iscsi/iscsi_target.c b/drivers/target/iscsi/iscsi_target.c
+--- a/drivers/target/iscsi/iscsi_target.c	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/target/iscsi/iscsi_target.c	2019-12-08 22:41:41.048340971 +0200
+@@ -3313,6 +3313,7 @@ iscsit_build_sendtargets_response(struct
+ 	unsigned char buf[ISCSI_IQN_LEN+12]; /* iqn + "TargetName=" + \0 */
+ 	unsigned char *text_in = cmd->text_in_ptr, *text_ptr = NULL;
+ 	bool active;
++	int matched_portal;
+ 
+ 	buffer_len = min(conn->conn_ops->MaxRecvDataSegmentLength,
+ 			 SENDTARGETS_BUF_LIMIT);
+@@ -3348,6 +3349,36 @@ iscsit_build_sendtargets_response(struct
+ 
+ 		target_name_printed = 0;
+ 
++		/* PetaSAN send targets with matching portal ip */ 
++		matched_portal =0;
++		spin_lock(&tiqn->tiqn_tpg_lock);
++		list_for_each_entry(tpg, &tiqn->tiqn_tpg_list, tpg_list) {
++			spin_lock(&tpg->tpg_np_lock);		
++			list_for_each_entry(tpg_np, &tpg->tpg_gnp_list,tpg_np_list) {
++				struct iscsi_np *np = tpg_np->tpg_np;
++/*
++				if (  np->np_ip != NULL && strcmp(conn->local_ip , np->np_ip) == 0 )
++					matched_portal = 1;
++*/
++				if (conn->local_sockaddr.ss_family == AF_INET) {
++					struct sockaddr_in* local_sockaddr_in = (struct sockaddr_in *)&conn->local_sockaddr;
++					struct sockaddr_in* np_sockaddr_in    = (struct sockaddr_in *)&np->np_sockaddr;
++
++					if( memcmp((char *)&local_sockaddr_in->sin_addr,(char *)&np_sockaddr_in->sin_addr ,sizeof(struct in_addr) ) == 0)
++						matched_portal = 1;
++				}
++
++				if( matched_portal == 1 )
++					break;
++			}
++			spin_unlock(&tpg->tpg_np_lock);
++			if( matched_portal == 1 )
++				break;
++		}
++		spin_unlock(&tiqn->tiqn_tpg_lock);
++		if (matched_portal !=1)
++			continue; 
++		
+ 		spin_lock(&tiqn->tiqn_tpg_lock);
+ 		list_for_each_entry(tpg, &tiqn->tiqn_tpg_list, tpg_list) {
+ 
+diff -upNr a/drivers/target/iscsi/iscsi_target_parameters.c b/drivers/target/iscsi/iscsi_target_parameters.c
+--- a/drivers/target/iscsi/iscsi_target_parameters.c	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/target/iscsi/iscsi_target_parameters.c	2019-12-08 22:41:52.292799515 +0200
+@@ -1442,6 +1442,9 @@ int iscsi_encode_text_output(
+ 	struct iscsi_extra_response *er;
+ 	struct iscsi_param *param;
+ 
++	if( param_list == NULL ) 
++		return -1;
++
+ 	output_buf = textbuf + *length;
+ 
+ 	if (iscsi_enforce_integrity_rules(phase, param_list) < 0)
+diff -upNr a/drivers/target/target_core_alua.c b/drivers/target/target_core_alua.c
+--- a/drivers/target/target_core_alua.c	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/target/target_core_alua.c	2019-12-08 22:41:47.828617096 +0200
+@@ -1662,10 +1662,10 @@ struct t10_alua_tg_pt_gp *core_alua_allo
+ 	tg_pt_gp->tg_pt_gp_alua_access_state =
+ 			ALUA_ACCESS_STATE_ACTIVE_OPTIMIZED;
+ 	/*
+-	 * Enable both explicit and implicit ALUA support by default
++	 * Default to symmetric LUA using ALUA semantics: implicit-only TPGs in A/O
+ 	 */
+-	tg_pt_gp->tg_pt_gp_alua_access_type =
+-			TPGS_EXPLICIT_ALUA | TPGS_IMPLICIT_ALUA;
++	tg_pt_gp->tg_pt_gp_alua_access_type = TPGS_IMPLICIT_ALUA;
++
+ 	/*
+ 	 * Set the default Active/NonOptimized Delay in milliseconds
+ 	 */
+diff -upNr a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
+--- a/drivers/target/target_core_device.c	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/target/target_core_device.c	2019-12-08 22:41:56.724981103 +0200
+@@ -1023,7 +1023,7 @@ int target_configure_device(struct se_de
+ 	 * passthrough because this is being provided by the backend LLD.
+ 	 */
+ 	if (!(dev->transport->transport_flags & TRANSPORT_FLAG_PASSTHROUGH)) {
+-		strncpy(&dev->t10_wwn.vendor[0], "LIO-ORG", 8);
++		strncpy(&dev->t10_wwn.vendor[0], "PETASAN", 8);
+ 		strncpy(&dev->t10_wwn.model[0],
+ 			dev->transport->inquiry_prod, 16);
+ 		strncpy(&dev->t10_wwn.revision[0],
+diff -upNr a/drivers/target/target_core_rbd.c b/drivers/target/target_core_rbd.c
+--- a/drivers/target/target_core_rbd.c	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/target/target_core_rbd.c	2019-12-08 22:42:16.917814336 +0200
+@@ -291,6 +291,8 @@ tcm_rbd_execute_cmd(struct se_cmd *cmd,
+ 	int ret;
+ 
+ 	if (op_type == OBJ_OP_WRITE || op_type == OBJ_OP_WRITESAME) {
++		if (rbd_dev_block_writes(rbd_dev)) 
++			rbd_dev_wait_on_bloked_writes(rbd_dev, 20);
+ 		down_read(&rbd_dev->header_rwsem);
+ 		snapc = rbd_dev->header.snapc;
+ 		ceph_get_snap_context(snapc);
+@@ -437,6 +439,8 @@ static sense_reason_t tcm_rbd_execute_cm
+ 	unsigned int len = cmd->t_task_nolb * dev->dev_attrib.block_size;
+ 	int ret;
+ 
++	if (rbd_dev_block_writes(rbd_dev)) 
++		rbd_dev_wait_on_bloked_writes(rbd_dev, 20);
+ 	down_read(&rbd_dev->header_rwsem);
+ 	snapc = rbd_dev->header.snapc;
+ 	ceph_get_snap_context(snapc);
+@@ -709,8 +713,8 @@ static bool tcm_rbd_get_write_cache(stru
+ #define TCM_RBD_PR_INFO_XATTR_VAL_SCSI3_RSV_ABSENT	"No SPC-3 Reservation holder"
+ #define TCM_RBD_PR_INFO_XATTR_VAL_SCSI2_RSV_ABSENT	"No SPC-2 Reservation holder"
+ 
+-/* don't allow encoded PR info to exceed 8K */
+-#define TCM_RBD_PR_INFO_XATTR_MAX_SIZE 8192
++/* don't allow encoded PR info to exceed 80K */
++#define TCM_RBD_PR_INFO_XATTR_MAX_SIZE 81920
+ 
+ /*
+  * TRANSPORT_IQN_LEN + strlen(",i,0x") + sizeof(u64) * 2 + strlen(",")
+@@ -779,6 +783,8 @@ struct tcm_rbd_pr_info {
+ 	 (TCM_RBD_PR_INFO_XATTR_ENCODED_PR_REG_MAXLEN * _num_regs) +	\
+ 	 sizeof("\0"))
+ 
++#define PR_CACHE_TIMEOUT_SEC  3
++
+ static int
+ tcm_rbd_gen_it_nexus(struct se_session *se_sess,
+ 		     char *nexus_buf,
+@@ -1498,12 +1504,12 @@ static int
+ tcm_rbd_pr_info_init(struct tcm_rbd_dev *tcm_rbd_dev,
+ 		     struct tcm_rbd_pr_info **_pr_info,
+ 		     char **_pr_xattr, int *_pr_xattr_len)
+-
+ {
+ 	struct tcm_rbd_pr_info *pr_info;
+ 	char *pr_xattr = NULL;
+ 	int pr_xattr_len = 0;
+ 	int rc;
++	struct rbd_device *rbd_dev = tcm_rbd_dev->rbd_dev;
+ 
+ 	pr_info = kzalloc(sizeof(*pr_info), GFP_KERNEL);
+ 	if (!pr_info) {
+@@ -1521,6 +1527,13 @@ tcm_rbd_pr_info_init(struct tcm_rbd_dev
+ 		goto err_info_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	if( rbd_dev->pr_cached )
++		kfree(rbd_dev->pr_cached);
++	rbd_dev->pr_cached = NULL;
++	rbd_dev->pr_dirty = true;
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	rc = rbd_dev_setxattr(tcm_rbd_dev->rbd_dev,
+ 			      TCM_RBD_PR_INFO_XATTR_KEY,
+ 			      pr_xattr, pr_xattr_len);
+@@ -1529,6 +1542,16 @@ tcm_rbd_pr_info_init(struct tcm_rbd_dev
+ 		goto err_xattr_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	rbd_dev->pr_cached = kstrdup(pr_xattr, GFP_KERNEL);
++	if (rbd_dev->pr_cached) {
++		rbd_dev->pr_dirty = false;
++		rbd_dev->pr_cache_ts = jiffies;
++	}
++	rbd_notify_scsi_pr_update(rbd_dev);
++
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	*_pr_info = pr_info;
+ 	if (_pr_xattr) {
+ 		BUG_ON(!_pr_xattr_len);
+@@ -1558,17 +1581,60 @@ tcm_rbd_pr_info_get(struct tcm_rbd_dev *
+ 	char *dup_xattr = NULL;
+ 	int pr_xattr_len = 0;
+ 	struct tcm_rbd_pr_info *pr_info = NULL;
++	struct rbd_device *rbd_dev = tcm_rbd_dev->rbd_dev;
+ 
+ 	BUG_ON(!_pr_info);
+ 
+-	rc = rbd_dev_getxattr(tcm_rbd_dev->rbd_dev, TCM_RBD_PR_INFO_XATTR_KEY,
++	mutex_lock(&rbd_dev->pr_mutex);
++	if( !rbd_dev->pr_dirty  && time_before(jiffies,rbd_dev->pr_cache_ts + HZ * PR_CACHE_TIMEOUT_SEC) ) {
++		if( !rbd_dev->pr_cached ) {
++			mutex_unlock(&rbd_dev->pr_mutex);
++			return  -ENODATA;
++		}
++		pr_xattr = kstrdup(rbd_dev->pr_cached, GFP_KERNEL);
++		mutex_unlock(&rbd_dev->pr_mutex);
++		if( !pr_xattr ) 
++			return -ENOMEM;
++	
++		pr_xattr_len = strlen(pr_xattr) + 1;
++	}
++	else {
++		rc = rbd_dev_getxattr(tcm_rbd_dev->rbd_dev, TCM_RBD_PR_INFO_XATTR_KEY,
+ 			      TCM_RBD_PR_INFO_XATTR_MAX_SIZE,
+ 			      (void **)&pr_xattr, &pr_xattr_len);
+-	if (rc) {
+-		if (rc != -ENODATA)
++		if( rc && rc != -ENODATA ) {
+ 			pr_warn("failed to obtain PR xattr: %d\n", rc);
+-		return rc;
++			mutex_unlock(&rbd_dev->pr_mutex);
++			return rc;
++		}
++
++		if( rbd_dev->pr_cached )
++			kfree(rbd_dev->pr_cached);
++
++		if( rc == -ENODATA ) {
++			rbd_dev->pr_cached = NULL;
++			rbd_dev->pr_dirty = false;
++			rbd_dev->pr_cache_ts = jiffies;
++			mutex_unlock(&rbd_dev->pr_mutex);
++			return rc;
++		}
++
++		if (pr_xattr) {
++			rbd_dev->pr_cached = kstrdup(pr_xattr, GFP_KERNEL);
++			if ( rbd_dev->pr_cached) {  
++				rbd_dev->pr_dirty = false;
++				rbd_dev->pr_cache_ts = jiffies;
++			}
++		} 
++		else {
++			rbd_dev->pr_cached = NULL;
++			rbd_dev->pr_dirty = false;
++			rbd_dev->pr_cache_ts = jiffies;
++		}
++
++		mutex_unlock(&rbd_dev->pr_mutex);
+ 	}
++	
+ 	if (_pr_xattr) {
+ 		/* dup before decode, which trashes @pr_xattr */
+ 		dup_xattr = kstrdup(pr_xattr, GFP_KERNEL);
+@@ -1610,6 +1676,7 @@ tcm_rbd_pr_info_replace(struct tcm_rbd_d
+ 	int rc;
+ 	char *pr_xattr_new = NULL;
+ 	int pr_xattr_len_new = 0;
++	struct rbd_device *rbd_dev = tcm_rbd_dev->rbd_dev;
+ 
+ 	BUG_ON(!pr_xattr_old || !pr_info_new);
+ 
+@@ -1629,6 +1696,13 @@ tcm_rbd_pr_info_replace(struct tcm_rbd_d
+ 		goto err_xattr_new_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	if( rbd_dev->pr_cached )
++		kfree(rbd_dev->pr_cached);
++	rbd_dev->pr_cached = NULL;
++	rbd_dev->pr_dirty = true;
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	rc = rbd_dev_cmpsetxattr(tcm_rbd_dev->rbd_dev,
+ 				 TCM_RBD_PR_INFO_XATTR_KEY,
+ 				 pr_xattr_old, pr_xattr_len_old,
+@@ -1638,6 +1712,16 @@ tcm_rbd_pr_info_replace(struct tcm_rbd_d
+ 		goto err_xattr_new_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	rbd_dev->pr_cached = kstrdup(pr_xattr_new, GFP_KERNEL);
++	if (rbd_dev->pr_cached) {
++		rbd_dev->pr_dirty = false;
++		rbd_dev->pr_cache_ts = jiffies;
++	}
++	rbd_notify_scsi_pr_update(rbd_dev);
++
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	dout("successfully replaced PR info\n");
+ 	rc = 0;
+ err_xattr_new_free:
+@@ -1679,12 +1763,13 @@ tcm_rbd_execute_pr_read_keys(struct se_c
+ 	dout("packed gen %u in read_keys response\n", pr_info->gen);
+ 
+ 	list_for_each_entry(reg, &pr_info->regs, regs_node) {
++		add_len += 8;
+ 		/*
+ 		 * Check for overflow of 8byte PRI READ_KEYS payload and
+ 		 * next reservation key list descriptor.
+ 		 */
+-		if ((add_len + 8) > (buf_len - 8))
+-			break;
++		if (add_len > (buf_len - 8))
++			continue;
+ 
+ 		buf[off++] = ((reg->key >> 56) & 0xff);
+ 		buf[off++] = ((reg->key >> 48) & 0xff);
+@@ -1695,8 +1780,6 @@ tcm_rbd_execute_pr_read_keys(struct se_c
+ 		buf[off++] = ((reg->key >> 8) & 0xff);
+ 		buf[off++] = (reg->key & 0xff);
+ 		dout("packed key 0x%llx in read_keys response\n", reg->key);
+-
+-		add_len += 8;
+ 	}
+ 
+ 	buf[4] = ((add_len >> 24) & 0xff);
+@@ -1893,7 +1976,11 @@ tcm_rbd_execute_pr_register_existing(str
+ 			goto out;
+ 		}
+ 	} else {
+-		/* update key */
++		if( pr_info->rsv && pr_info->rsv->key == existing_reg->key ) {
++			/* update reservation key */
++			pr_info->rsv->key = new_key;
++		}
++		/* update registration key */
+ 		existing_reg->key = new_key;
+ 	}
+ 
+@@ -2397,14 +2484,14 @@ tcm_rbd_pr_info_rm_regs_key(struct tcm_r
+ 	}
+ 
+ 	list_for_each_entry_safe(reg, reg_n, &pr_info->regs, regs_node) {
+-		if (reg == existing_reg)
++		if (new_key && (reg->key != new_key))
+ 			continue;
+ 
+-		if (new_key && (reg->key != new_key))
++		found = true;
++		if (reg == existing_reg)
+ 			continue;
+ 
+ 		tcm_rbd_pr_info_clear_reg(pr_info, reg);
+-		found = true;
+ 
+ 		/* TODO flag UA if different IT nexus */
+ 	}
+@@ -2561,6 +2648,7 @@ retry:
+ 	}
+ 
+ 	rc = tcm_rbd_pr_info_rm_regs_key(pr_info, existing_reg, new_key);
++	/* Allow pre-emption by current reservation holder
+ 	if (rc == -ENOENT) {
+ 		ret = TCM_RESERVATION_CONFLICT;
+ 		goto err_info_free;
+@@ -2568,6 +2656,7 @@ retry:
+ 		ret = TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+ 		goto err_info_free;
+ 	}
++	*/
+ 	tcm_rbd_pr_info_rsv_clear(pr_info);
+ 	rsv = NULL;
+ 	rc = tcm_rbd_pr_info_rsv_set(pr_info, existing_reg->key,
+@@ -3042,6 +3131,27 @@ err_info_free:
+ 	return ret;
+ }
+ 
++void petasan_pr_debug(char* command,struct tcm_rbd_pr_info *pr_info,char* nexus_buf,int val, u64 key)
++{
++	struct tcm_rbd_pr_reg *reg;
++	pr_debug("petasan_pr_debug ----------------------------------------- \n");
++	pr_debug("petasan_pr_debug command:%s   \n",command);
++	pr_debug("petasan_pr_debug nexus_buf:%s   \n",nexus_buf);
++	pr_debug("petasan_pr_debug val:%d   \n",val);
++	pr_debug("petasan_pr_debug key:0x%016Lx   \n",key);
++	if ( pr_info->rsv) {
++		pr_debug("petasan_pr_debug existing pr type:%d it_nexus:%s  key:0x%016Lx \n",pr_info->rsv->type,pr_info->rsv->it_nexus,pr_info->rsv->key);
++	}
++
++	list_for_each_entry(reg, &pr_info->regs, regs_node) {
++		pr_debug("petasan_pr_debug existing reg it_nexus:%s  key:0x%016Lx   \n",reg->it_nexus, reg->key);
++	}
++
++	pr_debug("petasan_pr_debug ----------------------------------------- \n\n");
++}
++
++
++
+ static struct target_pr_ops tcm_rbd_pr_ops = {
+ 	.check_conflict		= tcm_rbd_execute_pr_check_conflict,
+ 	.scsi2_reserve		= tcm_rbd_execute_pr_scsi2_reserve,
+diff -upNr a/drivers/target/target_core_xcopy.h b/drivers/target/target_core_xcopy.h
+--- a/drivers/target/target_core_xcopy.h	2019-09-17 16:26:49.000000000 +0200
++++ b/drivers/target/target_core_xcopy.h	2019-12-08 22:42:21.265994996 +0200
+@@ -4,7 +4,7 @@
+ #define XCOPY_TARGET_DESC_LEN		32
+ #define XCOPY_SEGMENT_DESC_LEN		28
+ #define XCOPY_NAA_IEEE_REGEX_LEN	16
+-#define XCOPY_MAX_SECTORS		1024
++#define XCOPY_MAX_SECTORS		8192
+ 
+ /*
+  * SPC4r37 6.4.6.1
+diff -upNr a/include/linux/ceph/librbd.h b/include/linux/ceph/librbd.h
+--- a/include/linux/ceph/librbd.h	2019-09-17 16:26:49.000000000 +0200
++++ b/include/linux/ceph/librbd.h	2019-12-08 22:41:25.275703093 +0200
+@@ -173,6 +173,16 @@ struct rbd_device {
+ 	/* sysfs related */
+ 	struct device		dev;
+ 	unsigned long		open_count;	/* protected by lock */
++
++	/* pr */
++	struct mutex		pr_mutex;
++	char			*pr_cached;	/* cached pr string */ 
++	bool			pr_dirty;
++	unsigned long 		pr_cache_ts;	
++
++	/* block writes during snapshots */
++	atomic_t		inflight_write_requests;
++	atomic_t		block_writes;
+ };
+ 
+ extern struct rbd_img_request *rbd_img_request_create(
+@@ -198,4 +208,12 @@ extern int rbd_dev_cmpsetxattr(struct rb
+ extern int rbd_dev_getxattr(struct rbd_device *rbd_dev, char *key, int max_val_len,
+ 			    void **_val, int *val_len);
+ 
++extern void rbd_notify_scsi_pr_update(struct rbd_device *rbd_dev);
++
++inline bool rbd_dev_block_writes(struct rbd_device *rbd_dev)
++{
++	return atomic_read(&rbd_dev->block_writes);
++}
++extern void rbd_dev_wait_on_bloked_writes(struct rbd_device *rbd_dev, u32 sec);
++
+ #endif
+diff -upNr a/include/linux/mm.h b/include/linux/mm.h
+--- a/include/linux/mm.h	2019-09-17 16:26:49.000000000 +0200
++++ b/include/linux/mm.h	2019-12-08 22:42:00.781147696 +0200
+@@ -2350,7 +2350,7 @@ int write_one_page(struct page *page, in
+ void task_dirty_inc(struct task_struct *tsk);
+ 
+ /* readahead.c */
+-#define VM_MAX_READAHEAD	512	/* kbytes */
++#define VM_MAX_READAHEAD	2048	/* kbytes */
+ #define VM_MIN_READAHEAD	16	/* kbytes (includes current page) */
+ 
+ int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
+diff -upNr a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
+--- a/kernel/cgroup/cgroup.c	2019-09-17 16:26:49.000000000 +0200
++++ b/kernel/cgroup/cgroup.c	2019-12-08 22:42:25.626176604 +0200
+@@ -1790,7 +1790,7 @@ static struct dentry *cgroup_mount(struc
+ 
+ 	if (fs_type == &cgroup2_fs_type) {
+ 		if (data && *(char *)data != '\0') {
+-			pr_err("cgroup2: unknown option \"%s\"\n", (char *)data);
++			/* pr_err("cgroup2: unknown option \"%s\"\n", (char *)data); */
+ 			put_cgroup_ns(ns);
+ 			return ERR_PTR(-EINVAL);
+ 		}

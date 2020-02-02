@@ -1,0 +1,249 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}
+<link href="/static/dist/css/node_role_setting.css" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+{% block content %}
+<section class="content">
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">2</span>Step 2<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">3</span>Step 3<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">4</span>Step 4<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">5</span>Step 5<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">6</span>Step 6<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">7</span><label style="color:#605ca8">Step 7</label><span
+                        class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+                <h4>Node {{node_name}} Services</h4>
+
+                <form id="option_form" method="post" action="{{ url_for('wizard_controller.save_node_role_setting') }}">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="box ">
+
+                                <div class="box-body">
+
+                                    {% if success %}
+                                    <input disabled style="position: absolute; margin: 0px;"
+                                           class="icheckbox_minimal-blue"
+                                           type="checkbox" name="option_manage" id="manage"
+                                           {% if manage_monitoring %}
+                                           checked="checked"
+                                           {% endif %}>
+                                    <label style="padding-left:20px;" for="manage">Management and Monitoring
+                                        Services </label><br>
+                                    <input style="position: absolute; margin: 0px;" class="icheckbox_minimal-blue"
+                                           type="checkbox" name="option_storage" id="option_storage" value="storage"
+                                           onchange="onChangeShowDiskTable()" checked>
+                                    <label style="padding-left:20px;" for="storage">Local Storage Service</label><br>
+                                    <input style="position: absolute; margin: 0px;" class="icheckbox_minimal-blue"
+                                           type="checkbox" name="option_iscsi" id="option_iscsi" value="ISCSI" checked>
+                                    <label style="padding-left:20px;" for="ISCSI">iSCSI Target Service</label><br>
+
+                                    <input style="position: absolute; margin: 0px;" class="icheckbox_minimal-blue"
+                                           type="checkbox" name="backup" id="backup" value="backup_node">
+                                    <label style="padding-left:20px;" for="backup">Backup/Replication
+                                        Service</label><br>
+
+                                    <div style="padding-top: 5px" id="usage_alert" hidden>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-danger alert-dismissable">
+                                                    <button type="button" class="close"
+                                                            onclick="$('#usage_alert').hide();" aria-hidden="true">×
+                                                    </button>
+                                                    <h4><i class="icon fa fa-ban"></i> Alert!</h4>
+                                                    <span id="alert_message">{{gettext("ui_deploy_node_role_setting_label_select_usage") }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div id="table_disk_list" style="padding-top: 10px">
+                                            <div>
+                                                <h5>Notes:</h5>
+                                                <ul>
+                                                    <li><h5> {{gettext("ui__node_role_setting_ssd_type_msg") }}</h5></li>
+                                                    <li><h5> {{gettext("ui_deploy_node_role_setting_info_message_cache_ram")
+                                                    }}</h5></li>
+                                                </ul>
+                                                <br>
+                                                <h5 style="">
+                                                    {{gettext("ui_deploy_node_role_setting_info_message_select_disks") }}</h5>
+                                            </div>
+                                            <table id="diskList"
+                                                   class="table table-bordered table-striped table-align-mid"
+                                                    >
+                                                <thead>
+                                                <tr>
+                                                    <th class="no-sort"></th>
+                                                    <th>Name</th>
+                                                    <th>Size</th>
+                                                    <th>Type</th>
+                                                    <th>SSD</th>
+                                                    <th>Vendor</th>
+                                                    <th>Model</th>
+                                                    <th>Serial</th>
+                                                    <th>Usage</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for disk in diskList %}
+                                                {% if disk.usage != 1 %}
+                                                <tr>
+                                                    <td><input type="checkbox" class="disk_select"
+                                                               name="{{ disk.name }}"
+                                                               id="disk_check_box_{{ disk.name }}"
+                                                               onchange="onChangeUsageDisk('_{{ disk.name }}')"></td>
+                                                    <td>{{ disk.name }}</td>
+                                                    <td>{{ disk.size }}</td>
+                                                    <td>{{ disk.type }}</td>
+                                                    <td>{% if disk.is_ssd == true %} Yes {% else %}
+                                                        No {% endif %}
+                                                    </td>
+                                                    <td>{{ disk.vendor }}</td>
+                                                    <td>{{ disk.model }}</td>
+                                                    <td>{{ disk.serial }}</td>
+                                                    <td>
+                                                        <div class="row" >
+                                                            <div class="col-md-3">
+                                                          <select class="form-control disk_usage" id="usage_{{ disk.name }}" name="usage_{{ disk.name }}" disabled>
+                                                    <option value="0" ></option>
+                                                    <option value="cache" >Cache Device</option>
+                                                    <option value="journal" >Journal</option>
+                                                    <option value="osd" >OSD</option>
+                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+
+                                        </div>
+
+                                        {% if management_urls %}
+                                        <!-- Warning - of Backfill Speed -->
+                                        <!-- =========================== -->
+                                        <br>
+
+                                        <div style="padding-top: 5px" id="backfill_speed_alert">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="alert alert-warning alert-dismissable">
+                                                        <button type="button" class="close"
+                                                                onclick="$('#backfill_speed_alert').hide();"
+                                                                aria-hidden="true">×
+                                                        </button>
+                                                        <h4><i class="icon fa fa-warning"></i> Warning!</h4>
+                                                        <span id="test_message">
+                                                            {{ gettext("ui_deploy_set_backfill_speed_msg") }}
+                                                        </span>
+
+                                                        <div id="managementUrl1"
+                                                             style="font-weight: bold; padding-left: 15px;padding-top: 5px;">
+                                                            <p>Maintenance > Backfill Speed</p>
+                                                            <!-- <a id="urls1" href="" target="_blank">{{ management_urls[0] }}maintenance/config/set_backfill_speed</a> -->
+                                                        </div>
+                                                        <!--
+                                                        <div id="managementUrl2" style="padding-left: 15px">
+                                                            <a id="urls2" href="">{{ management_urls[1] }}maintenance/config/set_backfill_speed</a>
+                                                        </div>
+                                                        <div id="managementUrl3" style="padding-left: 15px">
+                                                            <a id="urls3" href="">{{ management_urls[2] }}maintenance/config/set_backfill_speed</a>
+                                                        </div>
+                                                        -->
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- End of Warning - of Backfill Speed -->
+                                        <!-- ================================== -->
+                                        {% endif %}
+
+                                        <div class="box-footer">
+                                            <input type="hidden" id="validate">
+                                            <button type="submit" class="btn btn-primary pull-right margin">Next
+                                            </button>
+                                            <button type="submit" class="btn btn-primary pull-right margin"
+                                                    onclick="change_node_action('{{ url_for('wizard_controller.back_to_node_network_setting') }}')">
+                                                Previous
+                                            </button>
+                                            <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_node_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+
+                                        </div>
+                                        {% elif err %}
+                                        {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /.content -->
+{% endblock %}
+
+
+{% block js %}
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/dist/js/pages/cluster/node_role.js?v=7777777"></script>
+
+
+{% if management_urls %}
+<script>
+
+    //alert("{{ management_urls[0] }}");
+    //    $('#urls1').attr("href","{{ management_urls[0] }}maintenance/config/backfill_speed");
+    //    $('#urls2').attr("href","{{ management_urls[1] }}maintenance/config/backfill_speed");
+    //    $('#urls3').attr("href","{{ management_urls[2] }}maintenance/config/backfill_speed");
+
+    // in order to test in the virtual machine , use the following :
+    // $('#urls1').attr("href","http://100.100.100.100:5000/maintenance/config/backfill_speed");
+</script>
+{% endif %}
+
+
+{% endblock %}
+
+
+

@@ -1,0 +1,20 @@
+{
+# Example rule for storing 4 replicas in 2 rooms
+# Pool size needs = 4, min_size = 2
+
+id 0
+type replicated
+
+
+# Rule specific for 4 replicas
+min_size 4
+max_size 4
+
+# Placement logic
+step take default
+step choose firstn 2 type room
+step chooseleaf firstn 2 type host
+step emit
+}
+
+

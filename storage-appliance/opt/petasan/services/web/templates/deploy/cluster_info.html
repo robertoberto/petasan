@@ -1,0 +1,123 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head %}{% endblock %}
+{% block content %}
+<section class="content">
+
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">2</span><label style="color:#605ca8">Step
+                    2</label><span class="chevron"></span></li>
+                <li><span class="badge">3</span>Step 3<span class="chevron"></span></li>
+                <li><span class="badge">4</span>Step 4<span class="chevron"></span></li>
+                <li><span class="badge">5</span>Step 5<span class="chevron"></span></li>
+                <li><span class="badge">6</span>Step 6<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+
+                <h4>Cluster Identity</h4>
+
+                <form id="cluster_info_form" method="post"
+                      action="{{ url_for('wizard_controller.save_cluster_info') }}">
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <div class="box ">
+                                <div class="box-body">
+                                    <div class="col-md-6">
+                                        <!-- cluster name -->
+                                        <div class="form-group">
+                                            <label id="lblName"><i class=""></i>Cluster Name:<font
+                                                    color="red">*</font></label>
+                                            <input class="form-control" maxlength="50" type="text"
+                                                   id="name" autocomplete="off"
+                                                   name="name"
+                                                   value="{{deploy_data['cluster_info_&_join']['cluster_name']}}">
+                                        </div>
+                                        <!-- password -->
+
+                                        <div class="form-group">
+                                            <label id="lblPassword"><i class=""></i>Password:<font
+                                                    color="red">*</font></label>
+                                            <input class="form-control" maxlength="50" type="password"
+                                                   id="clusterPassword" autocomplete="off"
+                                                   name="clusterPassword" value="{{ form.Password }}">
+                                        </div>
+                                        <!-- confirm password -->
+
+                                        <div class="form-group">
+                                            <label id="lblConfirmPassword"><i class=""></i>Confirm Password:<font
+                                                    color="red">*</font></label>
+                                            <input class="form-control" maxlength="50" type="password"
+                                                   id="confirmPassword" autocomplete="off"
+                                                   name="confirmPassword" value="{{ form.Password }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-footer">
+                                    <input type="hidden" id="validate">
+                                    <button type="submit" class="btn btn-primary pull-right margin" >Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_landing_page') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+                            {% if err %}
+                            {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+                            {% endif %}
+
+                        </div>
+                    </div>
+            </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+</section><!-- /.content -->
+{% endblock %}
+
+
+{% block js %}
+<script src="/static/dist/js/pages/cluster/cluster_info.js?v=7777777"></script>
+<script>
+
+   var messages = new Object()
+        messages.label_cluster_name = "{{ gettext("ui_deploy_cluster_info_label_name") }}";
+        messages.lbl_cluster_name_contain_spaces = "{{ gettext("ui_deploy_cluster_name_lbl_contains_spaces") }}"
+        messages.label_cluster_password = "{{ gettext("ui_deploy_cluster_info_label_cluster_password") }}";
+        messages.label_cluster_confirm_password = "{{ gettext("ui_deploy_cluster_info_label_confirm_cluster_password") }}";
+    function change_action(url) {
+        $('#validate').val('false');
+        $("#cluster_info_form").attr("action", url);
+        $("#cluster_info_form").submit();
+    }
+</script>
+{% endblock %}

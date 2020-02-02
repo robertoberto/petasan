@@ -1,0 +1,117 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+
+{% endblock %}
+
+{% block title %}<title>Edit Replication User</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-clone"></i> Replication </li>
+    <li><i class="fa fa-child"></i> <a href="/replication_users/users_list"> Users</a></li>
+    <li><i class="fa fa-edit"></i> Edit User </li>
+</ol>
+{% endblock %}
+{% block content_header %}Edit Replication User{% endblock %}
+{% block content %}
+<section class="content">
+    <form id="update_user" method="post" action="{{ url_for('replication_users_controller.update_user', user_name = user_info.user_name ) }}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box  box-default">
+                    <div class="box-body">
+                        <!-- message area -->
+                        {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+
+                            <div class="row">
+                                <div class="col-md-7">
+
+                                    <div class="form-group">
+                                        <label id="lblUserName"><i class=""></i>User Name:<font color="red">*</font></label>
+                                        <input class="form-control" maxlength="50" type="text" disabled
+                                               id="userName" autocomplete="off"
+                                               name="userName" value="{{ user_info.user_name }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label id="lblPools"><i class=""></i>Authorized Pools:<font color="red">*</font></label>
+                                        <i data-toggle="tooltip" data-placement="right"
+                                               title='{{ gettext("ui_admin_replication_user_explain_authorized_pools") }}'
+                                               class="fa fa-fw fa-info-circle"></i>
+                                        <select class="form-control" name="pools[]" id="pools" multiple>
+                                            {% for pool in active_pools %}
+                                                <option value="{{ pool }}" {% if user_info.auth_pools %}{% if pool in user_info.auth_pools %} selected {% endif %} {% endif %}>{{ pool }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label><i class=""></i>User’s Private Key:</label>
+                                        <textarea id="key" rows="6" name="key" readonly style="resize: none"
+                                              class="form-control" >{{ user_info.ssh_prv_key }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-2" style="margin-left: -5%">
+                                    <div class="form-group" style="padding-top: 16%">
+                                        <a href="#" id="reset_key" onclick="resetKey('{{ user_info.user_name }}')" class="btn btn-primary pull-right">Reset Key</a>
+
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        <div class="box-footer">
+                            <button type="submit" class="btn btn-primary pull-right" value="submit">Save</button>
+                            <button type="button" style="margin-right: 10px" class="btn btn-default pull-right"
+                                    id="cancelBtn" value="cancel">Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('ScheduleJobs','ReplicationUsers')}}
+{% endblock %}
+
+
+{% block js %}
+<script src="/static/dist/js/pages/replication/cluster_users/edit_user.js?v=7777777"></script>
+<script>
+    var url = "{{ url_for('replication_users_controller.users_list') }}";
+    user_add_cancel(url);
+</script>
+
+
+{% endblock %}

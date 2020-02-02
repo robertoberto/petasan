@@ -1,0 +1,383 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<!-- AdminLTE Skins. Choose a skin from the css/skins
+     folder instead of downloading all of them to reduce the load. -->
+<link rel="stylesheet" href="../../../static/dist/css/skins/_all-skins.min.css">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+{% endblock %}
+
+{% block title %}<title> iSCSI Settings</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration</li>
+    <li><i class="fa fa-cog"></i> iSCSI Settings</li>
+</ol>
+{% endblock %}
+{% block content_header %}iSCSI Settings{% endblock %}
+{% block content %}
+<section class="content">
+    <form id="manage_network_config" method="post" action="{{ url_for('configuration_controller.save_network') }}">
+        <div class="row">
+
+            <div class="col-md-12">
+
+                <div class="box  box-default">
+
+
+                    <div class="box-body">
+                        <!-- message area -->
+                        {{ macros.message(gettext(err),gettext(success),gettext(warning),gettext(info)) }}
+                        <!--/ message area -->
+
+                        <div class="col-md-12">
+
+                            <div class="box-body">
+
+                                <div class="col-md-5">
+                                    <!-- subnet mask 1 -->
+                                    <div class="form-group">
+                                        <label id="lblIqn">IQN base prefix:<font color="red">*</font><i
+                                                class=""></i></label>
+
+                                        <div class="input-group">
+                                            <!--<div class="input-group-addon">-->
+                                            <!--<i class="">iqn.</i>-->
+                                            <!--</div>-->
+                                            <input type="text" class="form-control"
+                                                   id="iqnVal" name="Iqn"
+                                                   value="{{ form.Iqn }}"
+                                                   size="40"
+                                                    />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="box-header">
+                                <h3 class="box-title">iSCSI 1 Subnet</h3>
+                            </div>
+                            <div class="box-body">
+
+                                <div class="col-md-12">
+                                    <div class="col-md-5">
+                                        <!-- subnet mask 1 -->
+                                        <div class="form-group">
+                                            <label id="lblSubnet1">Subnet Mask:<font color="red">*</font><i
+                                                    class=""></i></label>
+
+                                            <div class="input-group">
+                                                <div class="input-group-addon">
+                                                    <i class="fa fa-laptop"></i>
+                                                </div>
+                                                <input type="text" class="form-control"
+                                                       data-inputmask="'alias': 'ip'"
+                                                       data-mask
+                                                       id="subnet1Val" name="Subnet1"
+                                                       value="{{ form.Subnet1 }}"
+                                                        >
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label></label>
+
+                                            <div class="input-group">
+                                                &nbsp;&nbsp;
+                                                <input style="vertical-align: -100%" id="vlan1_check" type="checkbox"
+                                                       name="vlan" value="true" {% if form.Subnet1_Vlan_Id %} checked
+                                                       {%endif%}>
+                                                &nbsp;&nbsp;
+                                                <label id="lblvlan1" style="font-weight: normal; vertical-align: -70%">VLAN Tagging</label>
+
+                                            </div>
+
+
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-3">
+
+                                        <div id="vlan1" class="form-group"
+                                             {%if not form.Subnet1_Vlan_Id %} style="display: none"
+                                        {% else %}style="display: block"{%endif%}>
+
+                                        <label id="lblvlan1id">VLAN ID:<font color="red">*</font><i
+                                                class=""></i></label>
+
+                                        <div class="input-group">
+                                            <input type="text" class="form-control"
+                                                   id="IDVal1" name="Subnet1_Vlan_Id"
+                                                   value="{{form.Subnet1_Vlan_Id}}"
+                                                    size="40"/>
+
+                                        </div>
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            <div class="col-md-12">
+
+                                <div class="col-md-5">
+                                    <!-- path1 subnet  mask 1 -->
+                                    <div class="form-group">
+                                        <label id="lblFromSubnet1">Auto IP Range: <i class="">From:</i> <font
+                                                color="red">*</font></label>
+
+                                        <div class="input-group">
+                                            <div class="input-group-addon">
+                                                <i class="fa fa-laptop"></i>
+                                            </div>
+                                            <input type="text" class="form-control"
+                                                   data-inputmask="'alias': 'ip'"
+                                                   data-mask
+                                                   id="fromSubnet1Val" name="Subnet1_Ip_From"
+                                                   value="{{ form.Subnet1_Ip_From }}"
+                                                    >
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                                <div class="col-md-5">
+
+                                    <!-- path2 subnet  mask 1 -->
+                                    <div class="form-group">
+                                        <label id="lblToSubnet1"><i class="">To:</i> <font color="red">*</font></label>
+
+                                        <div class="input-group">
+                                            <div class="input-group-addon">
+                                                <i class="fa fa-laptop"></i>
+                                            </div>
+                                            <input type="text" class="form-control"
+                                                   data-inputmask="'alias': 'ip'"
+                                                   data-mask
+                                                   id="toSubnet1Val" name="Subnet1_Ip_To"
+                                                   value="{{ form.Subnet1_Ip_To }}"
+                                                    >
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </div>
+
+
+                            <!-- /.box-body -->
+                        </div>
+
+
+                        <div class="box-header">
+                            <h3 class="box-title">iSCSI 2 Subnet </h3>
+                        </div>
+                        <div class="box-body">
+
+                            <div class="col-md-12">
+                                <div class="col-md-5">
+                                    <!-- subnet mask 1 -->
+                                    <div class="form-group">
+                                        <label id="lblSubnet2">Subnet Mask:<font color="red">*</font><i
+                                                class=""></i></label>
+
+                                        <div class="input-group">
+                                            <div class="input-group-addon">
+                                                <i class="fa fa-laptop"></i>
+                                            </div>
+                                            <input type="text" class="form-control"
+                                                   data-inputmask="'alias': 'ip'"
+                                                   data-mask
+                                                   id="subnet2Val" name="Subnet2"
+                                                   value="{{ form.Subnet2 }}"
+                                                    >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label></label>
+
+                                        <div class="input-group">
+                                            &nbsp;&nbsp;
+                                            <input style="vertical-align: -100%" id="vlan2_check" type="checkbox"
+                                                   name="vlan" value="vlan" {% if form.Subnet2_Vlan_Id%} checked
+                                                   {%endif%}>
+                                            &nbsp;&nbsp;
+                                            <label id="lblvlan2" style="font-weight: normal; vertical-align: -70%">VLAN Tagging</label>
+
+                                        </div>
+
+
+                                    </div>
+
+                                </div>
+                                <div class="col-md-3">
+                                    <div id="vlan2" class="form-group"
+                                         {% if not form.Subnet2_Vlan_Id %} style="display: none"
+                                    {% else %}style="display: block"{%endif%}>
+                                    <label id="lblvlan2id">VLAN ID:<font color="red">*</font><i
+                                            class=""></i></label>
+
+                                    <div class="input-group">
+                                        <input type="text" class="form-control"
+                                               id="IDVal2" name="Subnet2_Vlan_Id"
+                                               value="{{form.Subnet2_Vlan_Id}}"
+                                               size="40"/>
+
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                        <div class="col-md-12">
+
+                            <div class="col-md-5">
+                                <!-- path1 subnet  mask 1 -->
+                                <div class="form-group">
+                                    <label id="lblFromSubnet2">Auto IP Range: <i class="">From:</i> <font
+                                            color="red">*</font></label>
+
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-laptop"></i>
+                                        </div>
+                                        <input type="text" class="form-control"
+                                               data-inputmask="'alias': 'ip'"
+                                               data-mask
+                                               id="fromSubnet2Val" name="Subnet2_Ip_From"
+                                               value="{{ form.Subnet2_Ip_From }}"
+                                                >
+                                    </div>
+                                </div>
+
+
+                            </div>
+                            <div class="col-md-5">
+
+                                <!-- path2 subnet  mask 1 -->
+                                <div class="form-group">
+                                    <label id="lblToSubnet2"><i class="">To:</i> <font
+                                            color="red">*</font></label>
+
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-laptop"></i>
+                                        </div>
+                                        <input type="text" class="form-control"
+                                               data-inputmask="'alias': 'ip'"
+                                               data-mask
+                                               id="toSubnet2Val" name="Subnet2_Ip_To"
+                                               value="{{ form.Subnet2_Ip_To }}"
+                                                >
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+
+
+                        <!-- /.box-body -->
+                    </div>
+                </div>
+
+            </div>
+            <div class="box-footer">
+
+                <button type="submit" class="btn btn-primary pull-right">Save</button>
+                <button type="reset" style="margin-right: 10px" class="btn btn-default pull-right"
+                        id="cancelBtn">Cancel
+                </button>
+            </div>
+        </div>
+        <!-- /.box -->
+        <!--/row-->
+
+        </div>
+        <!-- /.col (left) -->
+
+        <!-- /.col (right) -->
+        </div>
+        <!--hidden field to hold data-->
+        <input type="hidden" id="Subnet1_Info" name="Subnet1_Info" value="{{ form.Subnet1_Info }}"/>
+        <input type="hidden" id="Subnet2_Info" name="Subnet2_Info" value="{{ form.Subnet2_Info }}"/>
+        <input type="hidden" id="v1" name="Subnet2_Info" value="{{ form.Subnet1_Vlan_Id }}"/>
+        <input type="hidden" id="v2" name="Subnet2_Info" value="{{ form.Subnet2_Vlan_Id }}"/>
+        <!-- /.row -->
+    </form>
+</section><!-- /.content -->
+{% endblock %}
+
+{% block sidebar_menu %}
+{{ macros.nav('Configurtion','Iscsi Settings') }}
+{% endblock %}
+
+
+{% block js %}
+<!--input mask -->
+<script src="../../../static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="../../../static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="../../../static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script src="../../../static/plugins/Validation/ipSubnetCalculator.js"></script>
+<script src="../../../static/dist/js/pages/configuration/network.js?v=7777777"></script>
+<script>
+     console.log('vvvvvvvvvvvvvvvvvvvv');
+
+     var v1 = $('#v1').val();
+     var v2 = $('#v2').val();
+     console.log(v1);
+     console.log(v2);
+
+
+
+
+     var messages = new Object()
+        messages.label_iqn = "{{ gettext("ui_admin_network_label_iqn") }}"
+        messages.label_iqn_not_valid_format = "{{ gettext("ui_admin_network_label_iqn_not_valid_format") }}"
+        messages.label_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_subnet_iScsi_1") }}"
+        messages.label_invalid_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_invalid_subnet_iScsi_1") }}"
+        messages.label_from_ip_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_from_ip_subnet_iScsi_1") }}"
+        messages.label_invalid_from_ip_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_invalid_from_ip_subnet_iScsi_1") }}"
+        messages.label_to_ip_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_to_ip_subnet_iScsi_1") }}"
+        messages.label_invalid_to_ip_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_invalid_to_ip_subnet_iScsi_1") }}"
+        messages.label_invalid_to_ip_not_in_range_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_to_ip_not_in_range_iScsi_1") }}"
+        messages.label_invalid_to_ip_less_tahn_from_ip_subnet_iscsi_1 = "{{ gettext("ui_admin_network_label_to_ip_less_than_from_ip_iScsi_1") }}"
+        messages.label_subnet_iscsi_2 = "{{ gettext("ui_admin_network_label_subnet_iScsi_2") }}"
+        messages.label_invalid_subnet_iscsi_2 = "{{ gettext("ui_admin_network_label_invalid_subnet_iScsi_2") }}"
+        messages.label_from_ip_subnet_iscsi_2 = "{{ gettext("ui_admin_network_label_from_ip_subnet_iScsi_2") }}"
+        messages.label_invalid_from_ip_subnet_iscsi_2 = "{{ gettext("ui_admin_network_label_invalid_from_ip_subnet_iScsi_2") }}"
+        messages.label_to_ip_subnet_iscsi_2 = "{{ gettext("ui_admin_network_label_to_ip_subnet_iScsi_2") }}"
+        messages.label_invalid_to_ip_subnet_iscsi_2 = "{{ gettext("ui_admin_network_label_invalid_to_ip_subnet_iScsi_2") }}"
+        messages.label_invalid_to_ip_not_in_range_subnet_iscsi_2 = "{{ gettext("ui_admin_network_label_to_ip_not_in_range_iScsi_2") }}"
+        messages.label_invalid_to_ip_less_tahn_from_ip_subnet_iscsi_2 = "{{ gettext('ui_admin_network_label_to_ip_less_than_from_ip_iScsi_2') }}"
+
+
+        messages.vlan1_lbl_id_empty = "{{ gettext('ui_admin_network_label_vlan_empty') }}"
+        messages.vlan1_lbl_has_space_error = "{{ gettext("ui_admin_network_label_white_space") }}"
+        messages.vlan1_lbl_number_error = "{{ gettext("ui_admin_network_label_valid_digit") }}"
+
+</script>
+
+{% endblock %}

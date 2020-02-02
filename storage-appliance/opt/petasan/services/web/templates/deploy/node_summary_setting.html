@@ -1,0 +1,181 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}{% endblock %}
+{% block content %}
+<section class="content">
+
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">2</span>Step 2<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">3</span><label style="color:#605ca8">Step 3</label><span
+                        class="chevron"></span></li>
+                <li><span class="badge">4</span>Step 4<span class="chevron"></span></li>
+                <li><span class="badge">5</span>Step 5<span class="chevron"></span></li>
+                <li><span class="badge">6</span>Step 6<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+
+                <h4>Replacement Settings</h4>
+                {% if err %}
+                {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+                {% elif success %}
+                <form id="cluster_network_config" method="post"
+                      action="{{ url_for('wizard_controller.start_network_setting') }}">
+                    <div class="row">
+
+                        <div class="col-md-12">
+                            <div class="box  box-default">
+                                <div class="box-body">
+
+                                    <div class="col-md-4">
+
+                                        <div class="form-group">
+                                            <label><i class=""></i>Management Interface:</label><br/>
+                                            {{ cluster_info.management_eth_name }}<br/>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label><i class=""></i>iSCSI 1 Interface</label><br/>
+                                            {{ cluster_info.iscsi_1_eth_name }}<br/>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label><i class=""></i>iSCSI 2 Interface:</label><br/>
+                                            {{ cluster_info.iscsi_2_eth_name }}<br/>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-4" style="padding-left: 0px;">
+                                                <label><i class=""></i>Backend 1 Interface:</label>
+                                                {{ cluster_info.backend_1_eth_name }}<br/>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-4" style="padding-left: 0px;">
+                                                <label><i class=""></i>IP:</label>
+                                                {{ node_info.backend_1_ip }}<br/>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-4" style="padding-left: 0px;">
+                                                <label><i class=""></i>Subnet Mask:</label>
+                                                {{ cluster_info.backend_1_mask }}<br/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <br/>
+
+                                    <div class="col-md-12">
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-4" style="padding-left: 0px;">
+                                                <label><i class=""></i>Backend 2 Interface:</label>
+                                                {{ cluster_info.backend_2_eth_name }}<br/>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-4" style="padding-left: 0px;">
+                                                <label><i class=""></i>IP:</label>
+                                                {{ node_info.backend_2_ip }}<br/>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-4" style="padding-left: 0px;">
+                                                <label><i class=""></i>Subnet Mask:</label>
+                                                {{ cluster_info.backend_2_mask }}<br/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12" style="padding-top: 20px;">
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-4" style="padding-left: 0px;">
+                                                <label><i class=""></i>Node Role:</label>
+                                                <ul>
+                                                    {% if node_info.is_management == true %}
+                                                    <li>Management and Monitoring</li>
+                                                    {% elif node_info.is_iscsi == true %}
+                                                    <li>ISCSI Target Service</li>
+                                                    {% elif node_info.is_storage == true %}
+                                                    <li>Storage Service for local service</li>
+                                                    {% endif %}
+                                                </ul>
+                                                <br/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12" style="padding-top: 20px;">
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="alert alert-warning alert-dismissible">
+                                                <h4><i class="icon fa fa-warning"></i> Warning!</h4>
+                                                {{gettext("ui_deploy_node_summary_setting_warn_format_all_disks")}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-footer">
+                                    <input type="hidden" id="validate">
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_info') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section><!-- /.content -->
+{% endblock %}
+
+
+{% block js%}
+<!--input mask -->
+<script src="/static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script>
+    function change_action(url) {
+        $('#validate').val('false');
+        $('#cluster_network_config').attr("action", url);
+        $("#cluster_network_config").submit();
+    }
+</script>
+{% endblock %}

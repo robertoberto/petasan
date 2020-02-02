@@ -1,0 +1,12 @@
+--- a/drivers/target/iscsi/iscsi_target_parameters.c	2017-11-16 00:27:36.000000000 +0200
++++ b/drivers/target/iscsi/iscsi_target_parameters.c	2017-11-16 12:54:41.950476769 +0200
+@@ -1442,6 +1442,9 @@ int iscsi_encode_text_output(
+ 	struct iscsi_extra_response *er;
+ 	struct iscsi_param *param;
+ 
++	if( param_list == NULL ) 
++		return -1;
++
+ 	output_buf = textbuf + *length;
+ 
+ 	if (iscsi_enforce_integrity_rules(phase, param_list) < 0)

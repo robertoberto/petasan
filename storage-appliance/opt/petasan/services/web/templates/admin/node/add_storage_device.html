@@ -1,0 +1,194 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+<!-- Modal -->
+
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+
+        <form id="add_storage_device_form" method="POST" action="" onsubmit="return setFormAction()">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+
+                        <!-- Modal Header -->
+                        <!-- ============ -->
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true"> X </span>
+                            </button>
+                            <h4 class="modal-title"> Add Storage Device </h4>
+                        </div>
+
+                        <!--  Modal Body  -->
+                        <!-- ============ -->
+                        <div class="modal-body">
+                            <div class="box-body">
+
+                                <!--  The div of the "loading.gif" image  -->
+                                <div id="add_img" style="display: block; align-content: center; text-align: center;">
+
+                                    <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+
+                                    <p id="loading" name='loading' class="text-muted">
+
+                                    <h3 class="box-title"> Loading </h3>
+                                    </p>
+
+                                </div>
+
+                                <!-- Data displayed in the pop-up window -->
+                                <!-- *********************************** -->
+
+                                <div id="storageDeviceOptionsArea" style="display: none">
+                                    <!-- ======================================================================================================== -->
+
+                                    <!-- Physical Disk Name Div -->
+                                    <!-- ---------------------- -->
+                                    <div class="row" id="physical_disk_div" style="margin-bottom: 5px">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="physical_disk" id="lbl_physical_disk" class="control-label">Physical Disk:</label>
+                                                <input class="form-control" id="physical_disk" type="text" name="physical_disk" autocomplete="off" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Add as Div -->
+                                    <!-- ---------- -->
+                                    <div class="row" id="add_as_div" style="margin-bottom: 5px">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="add_as" id="lbl_add_as" class="control-label">Add As:</label>
+                                                <select class="form-control" id="add_as" name="add_as" onchange="viewDiskOption(this);">
+                                                     <option value="cache">Cache</option>
+                                                     <option value="journal">Journal</option>
+                                                     <option value="osd" selected>OSD</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- External Journal / Journal Disk Div -->
+                                    <!-- ----------------------------------- -->
+                                    <div class="row" id="external_journal_disk_div" style="margin-bottom: 5px">
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="external_journal" id="lbl_external_journal" class="control-label">External Journal:</label>
+                                                <select class="form-control" id="external_journal" name="external_journal" onchange="showJournalDisks(this);">
+                                                     <option value="disabled" selected>Disabled</option>
+                                                     <option value="enabled">Enabled</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-1"></div>
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="journal_disk_name" id="journal_disk_lbl" class="control-label" style="display: none">Journal Disk:</label>
+                                                <select class="form-control" id="journal_disk_name" name="journal_disk_name" style="display: none">
+                                                    <option value="auto" selected>Auto</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- External Cache / Cache Disk Div -->
+                                    <!-- ----------------------------------- -->
+                                    <div class="row" id="external_cache_disk_div" style="margin-bottom: 5px">
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="external_cache" id="lbl_external_cache" class="control-label">External Cache:</label>
+                                                <select class="form-control" id="external_cache" name="external_cache" onchange="showCacheDisks(this);">
+                                                     <option value="disabled" selected>Disabled</option>
+                                                     <option value="writecache">Write Cache</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-1"></div>
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="cache_disk_name" id="cache_disk_lbl" class="control-label" style="display: none">Cache Disk:</label>
+                                                <select class="form-control" id="cache_disk_name" name="cache_disk_name" style="display: none">
+                                                     <option value="auto" selected>Auto</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- No. of Partitions Div -->
+                                    <!-- --------------------- -->
+                                    <div class="row" id="partitions_div" style="display: none">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label for="partitions" id="lbl_no_of_partitions" class="control-label">No. of Partitions:</label>
+                                                <select class="form-control" id="partitions" name="partitions">
+                                                     <option value="1" selected>1</option>
+                                                     <option value="2">2</option>
+                                                     <option value="4">4</option>
+                                                     <option value="8">8</option>
+                                                 </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- "role_setting_info_message_cache_ram" Div -->
+                                    <!-- ----------------------------------------- -->
+                                    <div class="row" id="role_setting_info_message_cache_ram_div">
+                                        <div class="col-md-11">
+                                            <div class="form-group">
+                                                <h5>Notes:</h5>
+                                                <ul>
+                                                  <li><h5 id="message_ssd_type">{{ gettext("ui__node_role_setting_ssd_type_msg") }}</h5></li>
+                                                  <li><h5 id="message_cache_ram">{{ gettext("ui_deploy_node_role_setting_info_message_cache_ram") }}</h5></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ======================================================================================================== -->
+                                </div>
+
+
+                            </div>
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <!-- ============ -->
+                        <div class="modal-footer">
+                             <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                Close
+                            </button>
+
+                            <button type="submit" class="btn btn-primary pull-right" value="submit" id="add">
+                                Add
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+

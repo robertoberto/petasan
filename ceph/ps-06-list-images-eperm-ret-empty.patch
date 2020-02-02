@@ -1,0 +1,11 @@
+--- a/src/librbd/api/Image.cc	2019-07-17 17:12:36.000000000 +0200
++++ b/src/librbd/api/Image.cc	2019-07-30 23:25:19.000000000 +0200
+@@ -103,7 +103,7 @@ int Image<I>::list_images(librados::IoCt
+   if (io_ctx.get_namespace().empty()) {
+     bufferlist bl;
+     r = io_ctx.read(RBD_DIRECTORY, bl, 0, 0);
+-    if (r == -ENOENT) {
++    if (r == -ENOENT || r == -EPERM) {
+       return 0;
+     } else if (r < 0) {
+       lderr(cct) << "error listing v1 images: " << cpp_strerror(r) << dendl;

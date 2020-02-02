@@ -1,0 +1,400 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}{% endblock %}
+
+{% block title %}<title>Cluster Maintenance</title>{% endblock %}
+{% block breadcrumb %}
+    <ol class="breadcrumb">
+        <li><i class="fa fa-ambulance"></i> Maintenance</li>
+        <li><i class="fa fa-plus-square"></i> Cluster Maintenance</li>
+    </ol>
+{% endblock %}
+{% block content_header %} Cluster Maintenance {% endblock %}
+
+{% block content %}
+    <section class="content">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-body">
+                        <!-- message area -->
+                        {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                        <!--/ message area -->
+
+                        <!-- header -->
+                        <div class="box-header">
+                            <h3 class="box-title"><span id="header_settings_on_off">{{ gettext("ui_admin_cluster_maintenance_header_settings_on_off") }}</span>
+                            </h3>
+                        </div>
+                        <!--end of header -->
+
+                        <!-- Form -->
+                        <div class="col-md-12">
+                            <form id="Setting_form" method="POST"
+                                  action="{{ url_for('maintenance_controller.save_maintenance_setting') }}">
+                                <div class="box-body">
+
+                                    <!-- Fencing -->
+                                    <div class="row">
+                                        <div class="col-md-12" style="margin-left: -5px;">
+                                            <div class="form-group">
+
+                                                <label id="lbl_fencing">Fencing:
+                                                    <i data-toggle="tooltip"
+                                                       title='{{ gettext("ui_admin_cluster_maintenance_label_fencing") }}'
+                                                       class="fa fa-fw fa-info-circle"></i>
+                                                </label>
+                                                <span id="desc_info_fencing"></span>
+
+
+                                                <div class="row">
+                                                    <div class="col-md-1">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input name="fencing" value="1" type="radio"
+                                                                       {% if maintenance_config_form .fencing==1 %}
+                                                                       checked="checked"
+                                                                       {% endif %}>
+                                                                on
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-1">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input name="fencing" value="0" type="radio"
+                                                                       {% if maintenance_config_form.fencing==0 %}
+                                                                       checked="checked"
+                                                                       {% endif %}>
+                                                                off
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- OSD Settings Section  -->
+                                    <div class="row">
+                                        <div class="box-header">
+                                            <h3 class="box-title">OSD Settings</h3>
+                                        </div>
+                                        <div class="col-md-12">
+
+                                            <div class="col-md-12">
+                                                <div class="col-md-12">
+
+                                                    <!--Osd Recover -->
+                                                    <div class="form-group">
+                                                        <label id="lbl_osd_recover"> Recover:
+                                                            <i data-toggle="tooltip"
+                                                               title='{{ gettext("ui_admin_cluster_maintenance_label_osd_recover") }}'
+                                                               class="fa fa-fw fa-info-circle"></i>
+                                                        </label>
+
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_recover" value="1" type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_recover==1
+                                                                               %} checked="checked" {% endif %}>
+                                                                        on
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_recover" value="0" type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_recover==0
+                                                                               %} checked="checked" {% endif %}> off
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!-- Osd Rebalance -->
+                                                    <div class="form-group">
+                                                        <label id="lbl_osd_rebalance"> Rebalance:
+                                                            <i data-toggle="tooltip"
+                                                               title='{{ gettext("ui_admin_cluster_maintenance_label_osd_rebalance") }}'
+                                                               class="fa fa-fw fa-info-circle"></i>
+                                                        </label>
+
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_rebalance" value="1"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_rebalance==1
+                                                                               %}
+                                                                               checked="checked" {% endif %}>
+                                                                        on
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_rebalance" value="0"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_rebalance==0
+                                                                               %}
+                                                                               checked="checked" {% endif %}>
+                                                                        off
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!--Osd Backfill -->
+                                                    <div class="form-group">
+                                                        <label id="lbl_osd_backfill"> Backfill:
+                                                            <i data-toggle="tooltip"
+                                                               title='{{ gettext("ui_admin_cluster_maintenance_label_osd_backfill") }}'
+                                                               class="fa fa-fw fa-info-circle"></i>
+                                                        </label>
+
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_backfill" value="1"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_backfill==1
+                                                                               %} checked="checked" {% endif %}>
+                                                                        on
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_backfill" value="0"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_backfill==0
+                                                                               %} checked="checked" {% endif %}>
+                                                                        off
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!--Osd Mark Down -->
+                                                    <div class="form-group">
+                                                        <label id="lbl_osd_mark_down">Mark Down:
+                                                            <i data-toggle="tooltip"
+                                                               title='{{ gettext("ui_admin_cluster_maintenance_label_osd_mark_down") }}'
+                                                               class="fa fa-fw fa-info-circle"></i>
+                                                        </label>
+
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_mark_down" value="1"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_mark_down==1
+                                                                               %}
+                                                                               checked="checked" {% endif %}> on
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_mark_down" value="0"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_mark_down==0
+                                                                               %}
+                                                                               checked="checked" {% endif %}> off
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!-- Osd Mark Out-->
+                                                    <div class="form-group">
+                                                        <label id="lbl_osd_mark_out">Mark Out:
+                                                            <i data-toggle="tooltip"
+                                                               title='{{ gettext("ui_admin_cluster_maintenance_label_osd_mark_out") }}'
+                                                               class="fa fa-fw fa-info-circle"></i>
+                                                        </label>
+
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_mark_out" value="1"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_mark_out==1
+                                                                               %}
+                                                                               checked="checked" {% endif %}> on
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_mark_out" value="0"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_mark_out==0
+                                                                               %}
+                                                                               checked="checked" {% endif %}> off
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!-- Osd Scrub -->
+                                                    <div class="form-group">
+                                                        <label id="lbl_osd_scrub">Scrub:
+                                                            <i data-toggle="tooltip"
+                                                               title='{{ gettext("ui_admin_cluster_maintenance_label_osd_scrub") }}'
+                                                               class="fa fa-fw fa-info-circle"></i>
+                                                        </label>
+
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_scrub" value="1" type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_scrub==1 %}
+                                                                               checked="checked" {% endif %}> on
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_scrub" value="0" type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_scrub==0 %}
+                                                                               checked="checked" {% endif %}> off
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!-- Osd Deep Scrub -->
+                                                    <div class="form-group">
+                                                        <label id="lbl_osd_deep_scrub">Deep Scrub:
+                                                            <i data-toggle="tooltip"
+                                                               title='{{ gettext("ui_admin_cluster_maintenance_label_osd_deep_scrub") }}'
+                                                               class="fa fa-fw fa-info-circle"></i>
+                                                        </label>
+
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_deep_scrub" value="1"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_deep_scrub==1
+                                                                               %}
+                                                                               checked="checked" {% endif %}> on
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="radio">
+                                                                    <label>
+                                                                        <input name="osd_deep_scrub" value="0"
+                                                                               type="radio"
+                                                                               {% if
+                                                                               maintenance_config_form.osd_deep_scrub==0
+                                                                               %}
+                                                                               checked="checked" {% endif %}> off
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div> <!--end of box-body -->
+
+                    <!-- footer-->
+                    <div class="box-footer">
+                        <button type="button" onclick="document.getElementById('Setting_form').submit();"
+                                class="btn btn-primary pull-right">
+                            Save
+                        </button>
+                        <a href="{{ url_for('main_controller.dashboard')}}" style="margin-right: 20px"
+                           class="btn btn-default pull-right" id="cancelBtn">
+                            Cancel
+                        </a>
+                    </div> <!-- end footer -->
+                </div>
+            </div>
+        </div>
+
+    </section><!-- /.content -->
+{% endblock %}
+
+{% block sidebar_menu %}
+    {{ macros.nav('Maintenance','CLuster Maintenance') }}
+{% endblock %}
+
+
+{% block js %}
+{% endblock %}
+

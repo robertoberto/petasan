@@ -1,0 +1,18 @@
+--- a/src/mon/OSDMonitor.cc	2019-04-25 20:15:48.000000000 +0200
++++ b/src/mon/OSDMonitor.cc	2019-07-16 23:42:03.000000000 +0200
+@@ -6819,6 +6819,7 @@ int OSDMonitor::get_crush_rule(const str
+ 
+ int OSDMonitor::check_pg_num(int64_t pool, int pg_num, int size, ostream *ss)
+ {
++/*
+   auto max_pgs_per_osd = g_conf().get_val<uint64_t>("mon_max_pg_per_osd");
+   auto num_osds = std::max(osdmap.get_num_in_osds(), 3u);   // assume min cluster size 3
+   auto max_pgs = max_pgs_per_osd * num_osds;
+@@ -6844,6 +6845,7 @@ int OSDMonitor::check_pg_num(int64_t poo
+ 	<< " * num_in_osds " << num_osds << ")";
+     return -ERANGE;
+   }
++*/
+   return 0;
+ }
+ 

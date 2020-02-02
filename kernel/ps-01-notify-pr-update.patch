@@ -1,0 +1,312 @@
+diff -uprN a/drivers/block/rbd.c b/drivers/block/rbd.c
+--- a/drivers/block/rbd.c	2019-07-11 14:27:16.000000000 +0200
++++ b/drivers/block/rbd.c	2019-07-20 15:55:37.338118802 +0200
+@@ -47,6 +47,7 @@
+ #include <linux/idr.h>
+ #include <linux/workqueue.h>
+ #include <linux/scatterlist.h>
++#include <linux/delay.h>
+ 
+ #include "rbd_types.h"
+ 
+@@ -3833,6 +3834,9 @@ static void rbd_acknowledge_notify_resul
+ 	__rbd_acknowledge_notify(rbd_dev, notify_id, cookie, &result);
+ }
+ 
++static void rbd_handle_scsi_pr_update(struct rbd_device *rbd_dev, u8 struct_v,
++				     void **p);
++
+ static void rbd_watch_cb(void *arg, u64 notify_id, u64 cookie,
+ 			 u64 notifier_id, void *data, size_t data_len)
+ {
+@@ -3887,6 +3891,10 @@ static void rbd_watch_cb(void *arg, u64
+ 
+ 		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
+ 		break;
++	case RBD_NOTIFY_OP_SCSI_PR_UPDATE:
++		rbd_handle_scsi_pr_update(rbd_dev, struct_v, &p);
++		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
++		break;
+ 	default:
+ 		if (rbd_is_lock_owner(rbd_dev))
+ 			rbd_acknowledge_notify_result(rbd_dev, notify_id,
+@@ -5204,6 +5212,11 @@ static struct rbd_device *__rbd_dev_crea
+ 	rbd_dev->rbd_client = rbdc;
+ 	rbd_dev->spec = spec;
+ 
++	mutex_init(&rbd_dev->pr_mutex);
++	rbd_dev->pr_cached = NULL;
++	rbd_dev->pr_dirty = true;
++	rbd_dev->pr_cache_ts = jiffies;
++
+ 	return rbd_dev;
+ }
+ 
+@@ -6892,6 +6905,72 @@ static void __exit rbd_exit(void)
+ 	rbd_slab_exit();
+ }
+ 
++static void rbd_handle_scsi_pr_update(struct rbd_device *rbd_dev, u8 struct_v,
++				     void **p)
++{
++	struct rbd_client_id my_cid = rbd_get_cid(rbd_dev);
++	struct rbd_client_id cid = { 0 };
++	if (struct_v >= 2) {
++		cid.gid = ceph_decode_64(p);
++		cid.handle = ceph_decode_64(p);
++	}
++	if (rbd_cid_equal(&cid, &my_cid))
++		return;
++
++	dout("%s rbd_dev %p cid %llu-%llu\n", __func__, rbd_dev, cid.gid,
++	     cid.handle);
++
++	mutex_lock(&rbd_dev->pr_mutex);
++	/* dirty pr cache */
++	rbd_dev->pr_dirty = true;
++	mutex_unlock(&rbd_dev->pr_mutex);
++}
++
++static int __rbd_notify(struct rbd_device *rbd_dev,
++				enum rbd_notify_op notify_op,
++				struct page ***preply_pages,
++				size_t *preply_len)
++{
++	struct ceph_osd_client *osdc = &rbd_dev->rbd_client->client->osdc;
++	struct rbd_client_id cid = rbd_get_cid(rbd_dev);
++	int buf_size = 4 + 8 + 8 + CEPH_ENCODING_START_BLK_LEN;
++	char buf[buf_size];
++	void *p = buf;
++
++	dout("%s rbd_dev %p notify_op %d\n", __func__, rbd_dev, notify_op);
++
++	/* encode *LockPayload NotifyMessage (op + ClientId) */
++	ceph_start_encoding(&p, 2, 1, buf_size - CEPH_ENCODING_START_BLK_LEN);
++	ceph_encode_32(&p, notify_op);
++	ceph_encode_64(&p, cid.gid);
++	ceph_encode_64(&p, cid.handle);
++
++	return ceph_osdc_notify(osdc, &rbd_dev->header_oid,
++				&rbd_dev->header_oloc, buf, buf_size,
++				RBD_NOTIFY_TIMEOUT, preply_pages, preply_len);
++}
++
++void rbd_notify_scsi_pr_update(struct rbd_device *rbd_dev)
++{
++	struct page **reply_pages;
++	size_t reply_len;
++	int ret;
++
++	ret = __rbd_notify(rbd_dev,RBD_NOTIFY_OP_SCSI_PR_UPDATE, &reply_pages, &reply_len);
++	ceph_release_page_vector(reply_pages, calc_pages_for(0, reply_len));
++
++	if(ret) {
++		if(ret == -ETIMEDOUT)
++			rbd_warn(rbd_dev, "pr update notify timeout");
++		else {
++			rbd_warn(rbd_dev, "pr update notify failed, waiting for watchers to expire cache");
++			msleep(RBD_NOTIFY_TIMEOUT * 1000);
++		}
++	}
++}
++EXPORT_SYMBOL(rbd_notify_scsi_pr_update);
++
++
+ module_init(rbd_init);
+ module_exit(rbd_exit);
+ 
+diff -uprN a/drivers/block/rbd_types.h b/drivers/block/rbd_types.h
+--- a/drivers/block/rbd_types.h	2019-07-11 14:27:16.000000000 +0200
++++ b/drivers/block/rbd_types.h	2019-07-20 15:55:37.342118754 +0200
+@@ -37,6 +37,7 @@ enum rbd_notify_op {
+ 	RBD_NOTIFY_OP_RELEASED_LOCK      = 1,
+ 	RBD_NOTIFY_OP_REQUEST_LOCK       = 2,
+ 	RBD_NOTIFY_OP_HEADER_UPDATE      = 3,
++	RBD_NOTIFY_OP_SCSI_PR_UPDATE	 = 100,
+ };
+ 
+ /*
+diff -uprN a/drivers/target/target_core_rbd.c b/drivers/target/target_core_rbd.c
+--- a/drivers/target/target_core_rbd.c	2019-07-11 14:27:16.000000000 +0200
++++ b/drivers/target/target_core_rbd.c	2019-07-20 15:55:37.342118754 +0200
+@@ -779,6 +779,8 @@ struct tcm_rbd_pr_info {
+ 	 (TCM_RBD_PR_INFO_XATTR_ENCODED_PR_REG_MAXLEN * _num_regs) +	\
+ 	 sizeof("\0"))
+ 
++#define PR_CACHE_TIMEOUT_SEC  3
++
+ static int
+ tcm_rbd_gen_it_nexus(struct se_session *se_sess,
+ 		     char *nexus_buf,
+@@ -1498,12 +1500,12 @@ static int
+ tcm_rbd_pr_info_init(struct tcm_rbd_dev *tcm_rbd_dev,
+ 		     struct tcm_rbd_pr_info **_pr_info,
+ 		     char **_pr_xattr, int *_pr_xattr_len)
+-
+ {
+ 	struct tcm_rbd_pr_info *pr_info;
+ 	char *pr_xattr = NULL;
+ 	int pr_xattr_len = 0;
+ 	int rc;
++	struct rbd_device *rbd_dev = tcm_rbd_dev->rbd_dev;
+ 
+ 	pr_info = kzalloc(sizeof(*pr_info), GFP_KERNEL);
+ 	if (!pr_info) {
+@@ -1521,6 +1523,13 @@ tcm_rbd_pr_info_init(struct tcm_rbd_dev
+ 		goto err_info_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	if( rbd_dev->pr_cached )
++		kfree(rbd_dev->pr_cached);
++	rbd_dev->pr_cached = NULL;
++	rbd_dev->pr_dirty = true;
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	rc = rbd_dev_setxattr(tcm_rbd_dev->rbd_dev,
+ 			      TCM_RBD_PR_INFO_XATTR_KEY,
+ 			      pr_xattr, pr_xattr_len);
+@@ -1529,6 +1538,16 @@ tcm_rbd_pr_info_init(struct tcm_rbd_dev
+ 		goto err_xattr_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	rbd_dev->pr_cached = kstrdup(pr_xattr, GFP_KERNEL);
++	if (rbd_dev->pr_cached) {
++		rbd_dev->pr_dirty = false;
++		rbd_dev->pr_cache_ts = jiffies;
++	}
++	rbd_notify_scsi_pr_update(rbd_dev);
++
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	*_pr_info = pr_info;
+ 	if (_pr_xattr) {
+ 		BUG_ON(!_pr_xattr_len);
+@@ -1558,17 +1577,60 @@ tcm_rbd_pr_info_get(struct tcm_rbd_dev *
+ 	char *dup_xattr = NULL;
+ 	int pr_xattr_len = 0;
+ 	struct tcm_rbd_pr_info *pr_info = NULL;
++	struct rbd_device *rbd_dev = tcm_rbd_dev->rbd_dev;
+ 
+ 	BUG_ON(!_pr_info);
+ 
+-	rc = rbd_dev_getxattr(tcm_rbd_dev->rbd_dev, TCM_RBD_PR_INFO_XATTR_KEY,
++	mutex_lock(&rbd_dev->pr_mutex);
++	if( !rbd_dev->pr_dirty  && time_before(jiffies,rbd_dev->pr_cache_ts + HZ * PR_CACHE_TIMEOUT_SEC) ) {
++		if( !rbd_dev->pr_cached ) {
++			mutex_unlock(&rbd_dev->pr_mutex);
++			return  -ENODATA;
++		}
++		pr_xattr = kstrdup(rbd_dev->pr_cached, GFP_KERNEL);
++		mutex_unlock(&rbd_dev->pr_mutex);
++		if( !pr_xattr ) 
++			return -ENOMEM;
++	
++		pr_xattr_len = strlen(pr_xattr) + 1;
++	}
++	else {
++		rc = rbd_dev_getxattr(tcm_rbd_dev->rbd_dev, TCM_RBD_PR_INFO_XATTR_KEY,
+ 			      TCM_RBD_PR_INFO_XATTR_MAX_SIZE,
+ 			      (void **)&pr_xattr, &pr_xattr_len);
+-	if (rc) {
+-		if (rc != -ENODATA)
++		if( rc && rc != -ENODATA ) {
+ 			pr_warn("failed to obtain PR xattr: %d\n", rc);
+-		return rc;
++			mutex_unlock(&rbd_dev->pr_mutex);
++			return rc;
++		}
++
++		if( rbd_dev->pr_cached )
++			kfree(rbd_dev->pr_cached);
++
++		if( rc == -ENODATA ) {
++			rbd_dev->pr_cached = NULL;
++			rbd_dev->pr_dirty = false;
++			rbd_dev->pr_cache_ts = jiffies;
++			mutex_unlock(&rbd_dev->pr_mutex);
++			return rc;
++		}
++
++		if (pr_xattr) {
++			rbd_dev->pr_cached = kstrdup(pr_xattr, GFP_KERNEL);
++			if ( rbd_dev->pr_cached) {  
++				rbd_dev->pr_dirty = false;
++				rbd_dev->pr_cache_ts = jiffies;
++			}
++		} 
++		else {
++			rbd_dev->pr_cached = NULL;
++			rbd_dev->pr_dirty = false;
++			rbd_dev->pr_cache_ts = jiffies;
++		}
++
++		mutex_unlock(&rbd_dev->pr_mutex);
+ 	}
++	
+ 	if (_pr_xattr) {
+ 		/* dup before decode, which trashes @pr_xattr */
+ 		dup_xattr = kstrdup(pr_xattr, GFP_KERNEL);
+@@ -1610,6 +1672,7 @@ tcm_rbd_pr_info_replace(struct tcm_rbd_d
+ 	int rc;
+ 	char *pr_xattr_new = NULL;
+ 	int pr_xattr_len_new = 0;
++	struct rbd_device *rbd_dev = tcm_rbd_dev->rbd_dev;
+ 
+ 	BUG_ON(!pr_xattr_old || !pr_info_new);
+ 
+@@ -1629,6 +1692,13 @@ tcm_rbd_pr_info_replace(struct tcm_rbd_d
+ 		goto err_xattr_new_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	if( rbd_dev->pr_cached )
++		kfree(rbd_dev->pr_cached);
++	rbd_dev->pr_cached = NULL;
++	rbd_dev->pr_dirty = true;
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	rc = rbd_dev_cmpsetxattr(tcm_rbd_dev->rbd_dev,
+ 				 TCM_RBD_PR_INFO_XATTR_KEY,
+ 				 pr_xattr_old, pr_xattr_len_old,
+@@ -1638,6 +1708,16 @@ tcm_rbd_pr_info_replace(struct tcm_rbd_d
+ 		goto err_xattr_new_free;
+ 	}
+ 
++	mutex_lock(&rbd_dev->pr_mutex);
++	rbd_dev->pr_cached = kstrdup(pr_xattr_new, GFP_KERNEL);
++	if (rbd_dev->pr_cached) {
++		rbd_dev->pr_dirty = false;
++		rbd_dev->pr_cache_ts = jiffies;
++	}
++	rbd_notify_scsi_pr_update(rbd_dev);
++
++	mutex_unlock(&rbd_dev->pr_mutex);
++
+ 	dout("successfully replaced PR info\n");
+ 	rc = 0;
+ err_xattr_new_free:
+diff -uprN a/include/linux/ceph/librbd.h b/include/linux/ceph/librbd.h
+--- a/include/linux/ceph/librbd.h	2019-07-11 14:27:16.000000000 +0200
++++ b/include/linux/ceph/librbd.h	2019-07-20 15:55:37.342118754 +0200
+@@ -173,6 +173,12 @@ struct rbd_device {
+ 	/* sysfs related */
+ 	struct device		dev;
+ 	unsigned long		open_count;	/* protected by lock */
++
++	/* pr */
++	struct mutex		pr_mutex;
++	char			*pr_cached;	/* cached pr string */ 
++	bool			pr_dirty;
++	unsigned long 		pr_cache_ts;	
+ };
+ 
+ extern struct rbd_img_request *rbd_img_request_create(
+@@ -198,4 +204,6 @@ extern int rbd_dev_cmpsetxattr(struct rb
+ extern int rbd_dev_getxattr(struct rbd_device *rbd_dev, char *key, int max_val_len,
+ 			    void **_val, int *val_len);
+ 
++extern void rbd_notify_scsi_pr_update(struct rbd_device *rbd_dev);
++
+ #endif

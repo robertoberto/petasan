@@ -1,0 +1,187 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+<!-- Modal -->
+
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+
+        <!-- Modal Header -->
+        <!-- ============ -->
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true"> X </span>
+            </button>
+            <h4 class="modal-title">Replication Job Information</h4>
+        </div>
+
+        <!--  Modal Body  -->
+        <!-- ============ -->
+        <div class="modal-body">
+            <div class="box-body">
+
+                <div id="img_loading" style="display: block; align-content: center; text-align: center;">
+
+                    <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+
+                    <p id="loading" name='loading' class="text-muted">
+
+                    <h3 class="box-title">Loading</h3>
+                    </p>
+
+                </div>
+
+                <div id="jobInfoArea" style="display: none">
+                    <div class="col-sm-6">
+
+                        <div class="" id="job_info_id">
+                            <label> Name: </label>
+
+                            <p id='job_name'></p>
+                        </div>
+                        <div id="src_node_info_Name">
+                            <label> Used Node: </label>
+
+                            <p id='node_name'></p>
+                        </div>
+                        <!--<div id="source_header">-->
+                        <!--<label> Source: </label>-->
+                        <!--</div>-->
+                        <div id="src_cluster_info">
+                            <label> Source Cluster Name: </label>
+
+                            <p id='source_cluster_name'></p>
+                        </div>
+                        <div id="iscsi_disk_info">
+                            <label> Source Disk: </label>
+
+                            <p id='source_disk_id'></p>
+                        </div>
+                        <div id="compression_info">
+                            <label> Compression: </label>
+
+                            <p id='compression'></p>
+                        </div>
+                        <div id="compression_algorithm_info">
+                            <label> Compression Algorithm: </label>
+
+                            <p id='compression_algorithm'></p>
+                        </div>
+
+                        <div class=" box box-default" id="test"
+                             style="border: none; box-shadow: none;">
+                            <div class="box-header with-border" style="border: none;">
+                                <div class="box-tools pull-right" style="right: 0px; left: -7px; top: 6px;">
+                                    <button type="button" class="btn btn-box-tool btn_collapse"><i
+                                            id="mark" class="fa fa-plus"></i>
+                                    </button>
+                                </div>
+                                <h4 class="box-title" id="box_details_title"
+                                    style="font-weight: 700; font-size: 14px;">
+                                    Advanced
+                                </h4>
+                            </div>
+                            <div id="demo" class="box-body collapse">
+                                <div class="form-group">
+                                    <label>Pre Snapshot Script URL:
+                                        <i data-toggle="tooltip"
+                                           title='{{ gettext("ui_admin_pre_snap_script_label_tooltip") }}'
+                                           class="fa fa-fw fa-info-circle"></i></label>
+
+                                    <div id="pre_snap_info">
+                                        <p id='pre_snap_url'></p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Post Snapshot Script URL:
+                                        <i data-toggle="tooltip"
+                                           title='{{ gettext("ui_admin_post_snap_script_label_tooltip") }}'
+                                           class="fa fa-fw fa-info-circle"></i></label>
+
+                                    <div id="post_snap_info">
+
+                                        <p id='post_snap_url'></p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Post Job Complete URL:
+                                        <i data-toggle="tooltip"
+                                           title='{{ gettext("ui_admin_post_job_complete_label_tooltip") }}'
+                                           class="fa fa-fw fa-info-circle"></i></label>
+
+                                    <div id="post_job_info">
+
+                                        <p id='post_job_complete'></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="col-sm-6">
+                        <!--<div class="form-group" id="schedule_info">-->
+                        <!--<label>Schedule: </label>-->
+                        <!--<pre style='background-color: white' id='schedule' ></pre>-->
+                        <!--</div>-->
+
+                        <label id="lblSchedule" class="control-label">Schedule:</label>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                                                <textarea style='background-color: white;' id="schedule"
+                                                                          rows="2" name="rule_body"
+                                                                          class="form-control" readonly></textarea>
+                            </div>
+                        </div>
+                        <br>
+
+                        <!--<div class="form-group">-->
+                        <!--<label class="control-label">Destination:</label>-->
+                        <!--</div>-->
+
+                        <div class="form-group">
+                            <label>Destination Cluster Name:</label>
+
+                            <p id="destination_cluster_name"></p>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label>Destination Disk:</label>
+
+                            <p id="destination_disk_id"></p>
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal -->

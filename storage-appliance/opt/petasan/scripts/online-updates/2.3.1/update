@@ -1,0 +1,64 @@
+#! /bin/bash
+
+echo "--------------------------------------------"
+echo "Running update script PetaSAN 2.3.1 -> 2.4.0"
+echo ""
+
+patch -p1 --forward -d  /  <<'EOF'
+--- a/usr/lib/python2.7/dist-packages/dialog.py
++++ b/usr/lib/python2.7/dist-packages/dialog.py
+@@ -1221,10 +1221,7 @@ class Dialog(object):
+         l = ['"']
+ 
+         for c in argument:
+-            if c in ('"', '\\'):
+-                l.append("\\" + c)
+-            else:
+-                l.append(c)
++	    l.append(c)
+ 
+         return ''.join(l + ['"'])
+EOF
+
+
+chown -R ceph:ceph /var/lib/ceph/mon
+
+
+echo "Restarting console service"
+systemctl restart petasan-console
+
+if (systemctl is-active --quiet  petasan-admin) 
+then
+    echo "Restarting admin service"
+    systemctl restart petasan-admin
+fi
+
+if (systemctl is-active --quiet  petasan-notification) 
+then
+    echo "Restarting notification service"
+    systemctl restart petasan-notification
+fi
+
+
+if (systemctl is-active --quiet  carbon-cache) 
+then
+    echo "Restarting stats services"
+    /opt/petasan/scripts/stats-stop.sh
+    /opt/petasan/scripts/stats-start.sh
+fi
+
+
+echo "Configuring logrotate"
+mv /etc/cron.daily/logrotate /etc/cron.hourly
+sed -i '5 i maxsize 100M\nminsize 100M\n' /etc/logrotate.conf
+
+
+if (systemctl is-active --quiet petasan-iscsi)
+then
+    echo "Restarting iSCSI Service..."
+    touch /tmp/iscsi_keep_resources_flag
+    systemctl stop petasan-iscsi
+    systemctl start petasan-iscsi
+fi
+
+echo "Completed update script"

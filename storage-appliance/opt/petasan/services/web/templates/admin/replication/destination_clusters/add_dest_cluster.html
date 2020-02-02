@@ -1,0 +1,201 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.css">
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.skinModern.css">
+<link rel="stylesheet" href="/static/plugins/bootstrap-slider/slider.css">
+<link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+
+
+{% endblock %}
+
+{% block title %}<title> Add Destination Cluster </title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-clone"></i> Replication</li>
+    <li><i class="fa fa-desktop"></i> <a href="/replication/destination_clusters/list">Destination Clusters </a></li>
+    <li><i class="fa fa-plus"></i> Add Destination Cluster</li>
+</ol>
+{% endblock %}
+{% block content_header %}Add Destination Cluster {% endblock %}
+{% block content %}
+
+
+<section class="content">
+    <form id="addcluster_form" method="POST" action="{{ url_for('destination_cluster_controller.save_dest_cluster') }}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-body">
+                        {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+
+                        <div class="form-group">
+
+
+                            <!-- Cluster Name -->
+                            <div class=" col-md-7">
+                                <div class="form-group">
+                                    <label for="clusterName" id="clusterName_lbl" class="control-label">Cluster
+                                        Name:<font color="red">*</font></label>
+                                    <input id="clusterName" type="text" name="cluster_name" class="form-control" style="width: 100%">
+
+                                </div>
+                            </div>
+
+                            <!--  Destination Cluster IP -->
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label id="lblDestinationIP" class="control-label">Remote IP:<font
+                                                color="red">*</font>
+                                        <i data-toggle="tooltip"
+                                           title='{{ gettext("ui_admin_dest_cluster_ip_label_tooltip") }}'
+                                           class="fa fa-fw fa-info-circle"></i>
+                                    </label>
+
+
+                                    <div class="input-group">
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-laptop"></i>
+                                        </div>
+                                        <input type="text" class="form-control"
+                                               data-inputmask="'alias': 'ip'" data-mask
+                                               id="dest_cluster_ip" name="dest_cluster_ip" style="width: 100%">
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                            <!-- User Name -->
+                            <div class=" col-md-7">
+                                <div class="form-group">
+                                    <label for="userName" id="userName_lbl" class="control-label">User Name:<font
+                                            color="red">*</font></label>
+                                    <input id="userName" type="text" name="userName" class="form-control" style="width: 100%">
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label for="key" id="key_lbl">User's Private Key:<font color="red">*</font> </label>
+                                    <textarea id="key" rows="7" name="key"
+                                              class="form-control" style="width: 100%"></textarea>
+                                </div>
+
+                            </div>
+                            <div class="col-md-7">
+
+                                <button id="test_mail" class="btn btn-primary" type="button" onclick="return test_connection('{{ url_for('destination_cluster_controller.test_connection') }}')">
+                                        Test Connection
+                                    </button>
+                                <div>
+                                    <br>
+                                </div>
+
+                            </div>
+                             <div class="row" id="test_succeed" hidden>
+                                <div class="col-md-12">
+                                    <div class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close"
+                                                onclick="$('#test_succeed').hide();" aria-hidden="true">×
+                                        </button>
+                                        <h5><i class="icon fa fa-check"></i>{{ gettext('ui_admin_delete_dest_cluster_test_success')}}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row" id="test_failed" hidden>
+                                <div class="col-md-12">
+                                    <div class="alert alert-danger alert-dismissable">
+                                        <button type="button" class="close" onclick="$('#test_failed').hide();"
+                                                aria-hidden="true">×
+                                        </button>
+                                        <h5 id="failed_sent"><i class="icon fa fa-ban"></i></h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                        <!--</div>-->
+                        <!--</div>-->
+
+
+                    <div class="overlay" id="overlay">
+                        <i class="fa fa-refresh fa-spin"></i>
+
+                    </div>
+
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <br>
+                                    <div class="box-footer">
+                                        <button type="submit" class="btn btn-primary pull-right " value="submit">Save
+                                        </button>
+                                        <button type="button" style="margin-right: 10px"
+                                                class="btn btn-default pull-right" id="cancelBtn" value="cancel">Cancel
+                                        </button>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="test_success" value="{{ gettext('ui_admin_delete_dest_cluster_test_success') }}">
+        <input type="hidden" id="test_fail" value="{{ gettext('ui_admin_delete_dest_cluster_test_fail') }}">
+    </form>
+</section>
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block sidebar_menu %}
+{{macros.nav('ScheduleJobs','ReplicationClusters')}}
+{% endblock %}
+l
+<!-- *************************************************************************************************************** -->
+
+
+{% block js %}
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script src="/static/dist/js/pages/replication/destination_cluster/add_dest_cluster.js?v=7777777"></script>
+
+
+<script>
+    var path = "{{url_for('destination_cluster_controller.dest_clusters_list')}}";
+    set_cancel_add_cluster(path);
+
+    var messages = {}
+    messages.add_cluster_lbl_name_empty = '{{ gettext("ui_admin_add_cluster_lbl_name_empty") }}';
+    messages.add_cluster_lbl_ip_empty = '{{ gettext("ui_admin_add_cluster_lbl_ip_empty") }}';
+    messages.add_cluster_lbl_user_name_empty = '{{ gettext("ui_admin_add_cluster_lbl_user_name_empty") }}';
+    messages.add_cluster_lbl_key_empty = '{{ gettext("ui_admin_add_cluster_lbl_key_empty") }}';
+
+</script>
+
+
+{% endblock %}

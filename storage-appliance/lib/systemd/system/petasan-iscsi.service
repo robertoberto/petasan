@@ -1,0 +1,8 @@
+[Unit]
+Description= PetaSAN iSCSI Service
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/services/iscsi_service.py
+Restart=always
+RestartSec=3

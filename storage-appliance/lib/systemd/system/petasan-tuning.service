@@ -1,0 +1,9 @@
+[Unit]
+Description=PetaSAN tuning service
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/scripts/tuning/tuning.sh
+Restart=no
+RemainAfterExit=yes

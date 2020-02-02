@@ -1,0 +1,627 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.css">
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.skinModern.css">
+<link rel="stylesheet" href="/static/plugins/bootstrap-slider/slider.css">
+<link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+
+
+{% endblock %}
+
+{% block title %}<title> Add Pool </title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration </li>
+    <li><i class="fa fa-database"></i> <a href="/configuration/pools">Pools</a></li>
+    <li><i class="fa fa-database"></i> Add Pool</li>
+</ol>
+{% endblock %}
+{% block content_header %} Add Pool {% endblock %}
+{% block content %}
+
+<style>
+.tooltip-inner {
+    text-align: left;
+}
+</style>
+
+<section class="content">
+    <form id="addPool_form" method="POST" action="{{url_for('pool_controller.save_pool')}}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-body">
+                                                            <!-- Warning - of min replicas no -->
+                                    <!-- ============================= -->
+                                    <div style="display: none;" id="replicas_no_alert">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-warning alert-dismissable">
+                                                    <button type="button" class="close"
+                                                            onclick="$('#replicas_no_alert').hide();" aria-hidden="true">×
+                                                    </button>
+                                                    <h4><i class="icon fa fa-warning"></i> Warning!</h4>
+                                                    <span id="test_message">
+                                                        {{ gettext("ui_add_edit_pool_min_replicas_no_alert_msg") }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End of Warning - of min replicas no -->
+                                    <!-- ==================================== -->
+                        {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                        <!-- ####################################################################################### -->
+                        <!--                                  START OF PAGE CONTENT                                  -->
+                        <!-- ####################################################################################### -->
+
+                        <div class="form-group" style="margin-left: 10px">
+
+                            <!-- Pool Name -->
+                            <div class="row">
+                                <div class=" col-md-4">
+                                    <div class="form-group">
+                                        <label id="lblName" for="name" class="control-label">Pool Name:<font
+                                                color="red">*</font></label>
+
+                                        <input id="name" type="text" name="name" placeholder="Pool Name..."
+                                               class="form-control" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Pool Name -->
+                            <!-------------------------------------------------------------------------------------- -->
+                            <!-- Pool Type -->
+                            <div class="row">
+                                <div class=" col-md-4">
+                                    <div class="form-group">
+                                        <label id="lblType" class="control-label">Pool Type:<font
+                                                color="red">*</font></label>
+
+                                        <!-- Replicated & EC -->
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="pool_type" value="replicated" type="radio"
+                                                               checked="checked"
+                                                               id="replicated">
+                                                        &nbsp;Replicated
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-5">
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="pool_type" value="erasure" type="radio"
+                                                               id="erasure"
+                                                               {% if 'filestore' == storage_engine %}disabled{% endif %}>
+                                                        &nbsp;EC
+                                                    </label>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <!-- End Replicated & EC -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Pool Type -->
+                            <!-------------------------------------------------------------------------------------- -->
+
+                            <!--.................................................................................... -->
+                            <!-- Now there will be 2 <div> : one for Replicated Pool & one for Erasure Code Pool ..
+                            depended on which radio will be clicked the corresponding <div> will be appeared ... -->
+                            <!--.................................................................................... -->
+
+                            <div class="row">
+                                <!---------------------------------------------------------------------------------- -->
+                                <!-- Replicated Pool Div -->
+                                <div class=" col-md-12" id="replicated_pool_div">
+
+                                    <!-- Here : The Form of Replicated Pool -->
+                                    <!------------------------------------- -->
+
+                                    <!-- No of PGs -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_Rep_PG" for="rep_pg_num" class="control-label">Number of PGs:<font
+                                                        color="red">*</font>
+                                                    <i data-toggle="tooltip"
+                                                       title='{{ gettext("ui_admin_pool_pg_label_tooltip") }}'
+                                                       class="fa fa-fw fa-info-circle"></i>
+                                                </label>
+
+                                                <input id="rep_pg_num" type="text" name="rep_pg_num"
+                                                       class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End No of PGs -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- Size : No of Replicas -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_Rep_Size" for="rep_replica_size" class="control-label">Size:<font
+                                                        color="red">*</font></label>
+
+                                                <select id="rep_replica_size" name="rep_replica_size" class="form-control">
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End Size : No of Replicas -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- Min Size : Minimum No of Replicas -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_Rep_MinRep" for="rep_replica_min_size" class="control-label">
+                                                    Min Size:<font color="red">*</font></label>
+
+                                                <select id="rep_replica_min_size" name="rep_replica_min_size"
+                                                        class="form-control">
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End Min Size : Minimum No of Replicas -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- Compression -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_Rep_Compression" class="control-label">Compression:</label>
+
+                                                <!-- Enabled & Disabled -->
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input name="rep_compression_mode" value="enabled"
+                                                                       type="radio"
+                                                                       id="rep_enabled"
+                                                                       {% if 'filestore' == storage_engine %}disabled{% endif %}>
+                                                                &nbsp;Enabled
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-5">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input name="rep_compression_mode" value="disabled"
+                                                                       type="radio"
+                                                                       checked="checked"
+                                                                       id="rep_disabled">
+                                                                &nbsp;Disabled
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                                <!-- End Enabled & Disabled -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End Compression -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- Compression Algorithm -->
+                                    <div class="row">
+                                        <div class=" col-md-4" id="Rep_CompressionAlg" style="display: none">
+                                            <div class="form-group">
+                                                <label for="rep_compression_algorithm" class="control-label">Compression
+                                                    Algorithm:<font
+                                                            color="red">*</font></label>
+
+                                                <select id="rep_compression_algorithm" name="rep_compression_algorithm"
+                                                        class="form-control">
+                                                    <option value="snappy">snappy</option>
+                                                    <option value="zlib">zlib</option>
+                                                    <option value="zstd">zstd</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End Compression Algorithm -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- Rule Name -->
+                                    {% if rule_list and rule_list|length != 0 %}
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_Rep_RuleName" for="rep_rule_name" class="control-label">Rule Name:<font
+                                                        color="red">*</font></label>
+
+                                                <select id="rep_rule_name" name="rep_rule_name" class="form-control">
+                                                    <option value=" " selected>&nbsp;</option>
+
+                                                    {% for ruleName, ruleBody in rule_list.items() %}
+                                                        {% if "replicated" in ruleBody %}
+                                                            <option value="{{ ruleName }}" name="{{ ruleName }}">{{ ruleName }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <!-- End Rule Name -->
+                                    <!------------------------------------------------------------------------------ -->
+
+                                    <!-- End Of : The Form of Replicated Pool -->
+                                </div>
+
+                                <!---------------------------------------------------------------------------------- -->
+
+                                <!-- EC Pool Div -->
+                                <div class=" col-md-12" id="ec_pool_div" style="display: none">
+
+                                    <!-- Here : The Form of EC Pool -->
+                                    <!----------------------------- -->
+
+                                    <!-- EC Profile Name -->
+                                    {% if ec_profiles_list and ec_profiles_list|length != 0 %}
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_EC_Profile" for="ec_profile" class="control-label">EC Profile:<font
+                                                        color="red">*</font></label>
+
+
+                                                <select id="ec_profile" onchange="change_K_M_values(this.value)"
+                                                        name="ec_profile" class="form-control">
+                                                    <option value="" selected>&nbsp;</option>
+                                                    {% for profile_name , profile_info in ec_profiles_list.items() %}
+                                                    <option value="{{ profile_name }}##{{ profile_info.k }}##{{ profile_info.m }}" name="{{ profile_name }}">
+                                                        {{ profile_name }}
+                                                    </option>
+                                                    {% endfor %}
+
+                                                </select>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <!-- End EC Profile Name -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- EC No of PGs -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_EC_PG" for="ec_pg_num" class="control-label">Number of PGs:<font
+                                                        color="red">*</font>
+                                                    <i data-toggle="tooltip"
+                                                       title='{{ gettext("ui_admin_pool_pg_label_tooltip") }}'
+                                                       class="fa fa-fw fa-info-circle"></i>
+                                                </label>
+
+                                                <input id="ec_pg_num" type="text" name="ec_pg_num"
+                                                       class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End EC No of PGs -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- EC Size -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_EC_Size" class="control-label">Size:<font
+                                                        color="red">*</font>
+                                                </label>
+
+                                                <div class="row">
+                                                    <!-- EC : K -->
+                                                    <div class=" col-md-1">
+                                                        <label id="lbl_EC_K" for="ec_K" class="control-label">K:<font
+                                                                color="red">*</font>
+                                                        </label>
+                                                    </div>
+                                                    <div class=" col-md-4">
+                                                        <input id="ec_K" type="text" name="ec_K"
+                                                               class="form-control" readonly>
+                                                    </div>
+                                                    <div class=" col-md-2">
+                                                        <label id="plus" class="control-label">&nbsp;&nbsp;&nbsp;&nbsp;+</label>
+                                                    </div>
+                                                    <!-- EC : M -->
+                                                    <div class=" col-md-1">
+                                                        <label id="lbl_EC_M" for="ec_M" class="control-label">M:<font
+                                                                color="red">*</font>
+                                                        </label>
+                                                    </div>
+                                                    <div class=" col-md-4">
+                                                        <input id="ec_M" type="text" name="ec_M"
+                                                               class="form-control" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End EC Size -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- EC Min Size -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_EC_MinSize" for="ec_min_size" class="control-label">Min Size:<font
+                                                        color="red">*</font>
+                                                    <i data-toggle="tooltip"
+                                                       title='{{ gettext("ui_admin_ec_pool_min_size_label_tooltip") }}'
+                                                       class="fa fa-fw fa-info-circle"></i>
+                                                </label>
+
+                                                <input id="ec_min_size" type="text" name="ec_min_size"
+                                                       class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End EC Min Size -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- EC Compression -->
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_EC_Compression" class="control-label">Compression:</label>
+
+                                                <!-- Enabled & Disabled -->
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input name="ec_compression_mode" value="enabled"
+                                                                       type="radio"
+                                                                       id="ec_enabled">
+                                                                &nbsp;Enabled
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-5">
+                                                        <div class="radio">
+                                                            <label>
+                                                                <input name="ec_compression_mode" value="disabled"
+                                                                       type="radio"
+                                                                       checked="checked"
+                                                                       id="ec_disabled">
+                                                                &nbsp;Disabled
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                                <!-- End Enabled & Disabled -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End EC Compression -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- EC Compression Algorithm -->
+                                    <div class="row">
+                                        <div class=" col-md-4" id="EC_CompressionAlg" style="display: none">
+                                            <div class="form-group">
+                                                <label for="ec_compression_algorithm" class="control-label">Compression
+                                                    Algorithm:<font color="red">*</font></label>
+
+                                                <select id="ec_compression_algorithm" name="ec_compression_algorithm"
+                                                        class="form-control">
+                                                    <option value="snappy">snappy</option>
+                                                    <option value="zlib">zlib</option>
+                                                    <option value="zstd">zstd</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End EC Compression Algorithm -->
+                                    <!------------------------------------------------------------------------------ -->
+                                    <!-- EC Rule Name -->
+                                    {% if rule_list and rule_list|length != 0 %}
+                                    <div class="row">
+                                        <div class=" col-md-4">
+                                            <div class="form-group">
+                                                <label id="lbl_EC_RuleName" for="ec_rule_name" class="control-label">Rule Name:<font
+                                                        color="red">*</font></label>
+
+                                                <select id="ec_rule_name" name="ec_rule_name" class="form-control" onchange="get_Min_Max_rule_values(this.value)">
+                                                    <option value=" " selected>&nbsp;</option>
+
+                                                    {% for ruleName, ruleBody in rule_list.items() %}
+                                                        {% if "erasure" in ruleBody %}
+
+                                                            {% set min_index = ruleBody.find("min_size") %}
+                                                            {% set newline_index = ruleBody.find("\n", min_index) %}
+                                                            {% set min_value = ruleBody[(min_index + 8):newline_index] %}
+
+                                                            {% set max_index = ruleBody.find("max_size") %}
+                                                            {% set newline_index_max = ruleBody.find("\n", max_index) %}
+                                                            {% set max_value = ruleBody[(max_index + 8):newline_index_max] %}
+                                                            <option value="{{ ruleName }}##{{ min_value }}##{{ max_value }}" name="{{ ruleName }}">{{ ruleName }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <!-- End EC Rule Name -->
+                                    <!------------------------------------------------------------------------------ -->
+                                </div>
+                                <!---------------------------------------------------------------------------------- -->
+                            </div>
+
+                            <!-- ################################################################################### -->
+                            <!-- Buttons : Submit & Cancel -->
+                            <br>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="box-footer">
+
+                                        <button type="submit" class="btn btn-primary pull-right " value="submit">Save
+                                        </button>
+
+                                        <button type="button" style="margin-right: 10px"
+                                                class="btn btn-default pull-right" id="cancelBtn" value="cancel">Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Buttons : Submit & Cancel-->
+
+                        </div>
+
+                        <!-- ####################################################################################### -->
+                        <!--                                    END OF PAGE CONTENT                                  -->
+                        <!-- ####################################################################################### -->
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block sidebar_menu %}
+{{macros.nav('Configurtion','Pools')}}
+{% endblock %}
+l
+<!-- *************************************************************************************************************** -->
+
+
+{% block js %}
+
+<script>
+            $(document).ready(function () {
+        $('#rep_replica_min_size').on('change', function () {
+            if (this.value == '1') {
+                $("#replicas_no_alert").show();
+            }
+            else {
+                $("#replicas_no_alert").hide();
+            }
+        });
+    });
+    var selected_pool = '';
+    var selected_Rule_Min_value = -1;
+    var selected_Rule_Max_value = -1;
+    var selected_K_value = -1;
+    var selected_M_value = -1;
+
+    // Check which radiobutton ( of "Pool Type" : "Replicated" or "EC") is selected before refreshing the page
+    // to keep the selection after refreshing
+    // ===================================================================================================== //
+
+    if($('#replicated').is(':checked'))
+    {
+        //alert("replicated");
+        selected_pool = "replicated" ;
+        $("#ec_pool_div").hide();
+        $("#replicated_pool_div").show();
+    }
+
+    if($('#erasure').is(':checked'))
+    {
+        //alert("ec");
+        selected_pool = "erasure" ;
+        $("#replicated_pool_div").hide();
+        $("#ec_pool_div").show();
+    }
+
+    // Check which radiobutton ( of "Replicated Compression" : "Enabled" or "Disabled") is selected before
+    // refreshing the page to keep the selection after refreshing
+    // ============================================================================================================ //
+
+    if($('#rep_disabled').is(':checked'))
+    {
+        $("#Rep_CompressionAlg").hide();
+    }
+
+    if($('#rep_enabled').is(':checked'))
+    {
+        $("#Rep_CompressionAlg").show();
+    }
+
+    // Check which radiobutton ( of "EC Compression" : "Enabled" or "Disabled") is selected before
+    // refreshing the page to keep the selection after refreshing
+    // ============================================================================================================ //
+
+    if($('#ec_disabled').is(':checked'))
+    {
+        $("#EC_CompressionAlg").hide();
+    }
+
+    if($('#ec_enabled').is(':checked'))
+    {
+        $("#EC_CompressionAlg").show();
+    }
+</script>
+
+
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/dist/js/pages/pool/add_pool.js?v=7777777"></script>
+
+
+<script>
+    var path = "{{url_for('pool_controller.get_pools')}}";
+    set_cancel_add_rule(path);
+
+    var messages = {}
+    messages.add_pool_lbl_name_empty = '{{ gettext("ui_admin_manage_pool_lbl_name_empty") }}';
+    messages.add_pool_lbl_name_has_space_error = '{{ gettext("ui_admin_manage_pool_lbl_name_has_space_error") }}';
+    messages.add_pool_lbl_name_equals_all = '{{ gettext("ui_admin_manage_pool_lbl_name_equals_all") }}';
+    messages.add_pool_lbl_pg_empty = '{{ gettext("ui_admin_manage_pool_lbl_pg_empty") }}';
+    messages.add_pool_lbl_pg_has_space_error = '{{ gettext("ui_admin_manage_pool_lbl_pg_has_space_error") }}';
+    messages.add_pool_lbl_pg_number_error = '{{ gettext("ui_admin_pool_lbl_pg_number_error") }}';
+    messages.add_pool_lbl_min_replica_size_error = '{{ gettext("ui_admin_pool_lbl_min_replica_size_error") }}';
+    messages.add_pool_lbl_rule_name_empty = '{{ gettext("ui_admin_pool_lbl_rule_name_empty") }}';
+
+    messages.add_ec_pool_lbl_profile_name_empty = '{{ gettext("ui_admin_manage_ec_pool_lbl_profile_name_empty") }}';
+    messages.add_ec_pool_lbl_K_empty = '{{ gettext("ui_admin_manage_ec_pool_lbl_K_empty") }}';
+    messages.add_ec_pool_lbl_K_has_space_error = '{{ gettext("ui_admin_manage_ec_pool_lbl_K_has_space_error") }}';
+    messages.add_ec_pool_lbl_K_number_error = '{{ gettext("ui_admin_manage_ec_pool_lbl_K_number_error") }}';
+    messages.add_ec_pool_lbl_M_empty = '{{ gettext("ui_admin_manage_ec_pool_lbl_M_empty") }}';
+    messages.add_ec_pool_lbl_M_has_space_error = '{{ gettext("ui_admin_manage_ec_pool_lbl_M_has_space_error") }}';
+    messages.add_ec_pool_lbl_M_number_error = '{{ gettext("ui_admin_manage_ec_pool_lbl_M_number_error") }}';
+    messages.add_ec_pool_lbl_MinSize_empty = '{{ gettext("ui_admin_manage_ec_pool_lbl_MinSize_empty") }}';
+    messages.add_ec_pool_lbl_MinSize_has_space_error = '{{ gettext("ui_admin_manage_ec_pool_lbl_MinSize_has_space_error") }}';
+    messages.add_ec_pool_lbl_MinSize_number_error = '{{ gettext("ui_admin_manage_ec_pool_lbl_MinSize_number_error") }}';
+    messages.add_ec_pool_lbl_rule_name_empty = '{{ gettext("ui_admin_manage_ec_pool_lbl_rule_name_empty") }}';
+
+    messages.add_ec_pool_lbl_rule_max_size = '{{ gettext("ui_admin_manage_ec_pool_lbl_rule_max_size") }}';
+    messages.add_ec_pool_lbl_rule_min_size = '{{ gettext("ui_admin_manage_ec_pool_lbl_rule_min_size") }}';
+</script>
+
+{% endblock %}

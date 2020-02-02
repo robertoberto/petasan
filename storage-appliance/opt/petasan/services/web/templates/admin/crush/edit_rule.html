@@ -1,0 +1,128 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.css">
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.skinModern.css">
+<link rel="stylesheet" href="/static/plugins/bootstrap-slider/slider.css">
+<link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+
+
+
+{% endblock %}
+
+{% block title %}<title> Edit Rule </title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration </li>
+    <li><i class="fa fa-map"></i> CRUSH </li>
+    <li><i class="fa fa-book"></i> <a  href="/crush/rules">Rules</a> </li>
+    <li><i class="fa fa-book"></i> Edit Rule</li>
+</ol>
+{% endblock %}
+{% block content_header %} Edit Rule {% endblock %}
+{% block content %}
+
+
+<section class="content">
+    <form id="edit_rule_form" method="POST" action="{{url_for('crush_controller.edit_rule')}}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-body">
+                        {{ macros.message(gettext(err), gettext(success), gettext(warning), gettext(info)) }}
+
+
+                        <div class="form-group">
+
+
+
+                           <!-- Rule Name -->
+                            <div class=" col-md-7">
+                                <div class="form-group">
+                                    <label class="control-label"> Rule Name:&nbsp;&nbsp;&nbsp;</label>
+                                    <p>{{rule_name}}</p>
+                                    <input type="hidden" name="rule_name" value="{{rule_name}}">
+                                    <input type="hidden" name="rule_id" value="{{rule_id}}">
+
+                                </div>
+                            </div>
+
+
+
+                            <div class="col-md-7" >
+                                <div class="form-group">
+                                    <label for="ruleData" id="ruleData_lbl">Rule:<font color="red">*</font> </label>
+                                    <textarea id="ruleData" rows="10" name="rule_body"
+                                              class="form-control" {%if rule_id == 0 %}readonly{% endif %}>{{selected_rule_info}}</textarea>
+                                </div>
+                            </div>
+                            
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="box-footer">
+                                        <button type="submit" class="btn btn-primary pull-right " value="submit" {%if rule_id == 0 %}disabled{% endif %} >Save
+                                        </button>
+                                        <button type="button" style="margin-right: 10px"
+                                                class="btn btn-default pull-right" id="cancelBtn" value="cancel">Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+
+<!-- *************************************************************************************************************** -->
+
+{% block sidebar_menu %}
+{{macros.nav('Crush Map','Rules')}}
+{% endblock %}
+l
+<!-- *************************************************************************************************************** -->
+
+
+{% block js %}
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/dist/js/pages/crush/edit_rule.js?v=7777777"></script>
+<script>
+    var path = "{{url_for('crush_controller.get_rules_list')}}";
+    set_cancel_edit_rule(path);
+
+    var messages = {}
+    messages.add_rule_lbl_name_empty = '{{ gettext("ui_admin_manage_rule_lbl_name_empty") }}';
+    messages.add_rule_lbl_name_whitespace = '{{ gettext("ui_admin_manage_rule_lbl_whitespace") }}';
+    messages.add_rule_lbl_info_empty = '{{ gettext("ui_admin_manage_rule_lbl_info_empty") }}';
+
+</script>
+
+<!----------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------->
+
+<!----------------------------------------------------------------------------------->
+<!----------------------------------------------------------------------------------->
+
+
+{% endblock %}

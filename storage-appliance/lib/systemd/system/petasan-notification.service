@@ -1,0 +1,10 @@
+[Unit]
+Description= PetaSAN Notification Service
+After=syslog.target local-fs.target network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/scripts/start_notification_service.py
+Restart=always
+RestartSec=3
+

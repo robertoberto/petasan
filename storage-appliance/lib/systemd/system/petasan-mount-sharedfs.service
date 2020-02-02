@@ -1,0 +1,13 @@
+
+[Unit]
+Description= PetaSAN Mount SharedFS
+After=syslog.target local-fs.target network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/services/mount_sharedfs.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

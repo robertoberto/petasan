@@ -1,0 +1,290 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+
+<link type="text/html" href="view_rule.html">
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block title%}<title>Rules</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration</li>
+    <li><i class="fa fa-map"></i> CRUSH</li>
+    <li><i class="fa fa-book"></i> Rules</li>
+</ol>
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block content_header%}Rules{% endblock %}
+{% block content %}
+
+<!-- New --><!-- Style added for the linkable rows in the table -->
+<!-- ========================================================== -->
+<style>
+
+    #rules_Table td  a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: #000000;
+    }
+
+    #rules_Table td  a:hover {
+      color: #000000;
+    }
+
+    #rules_Table td  a:active {
+      color: #000000;
+    }
+
+    #rules_Table td  a:visited {
+      color: #000000;
+    }
+
+</style>
+<!-- ============================================== -->
+
+<section class="content">
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <!-- /.box-header -->
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                    <!-- ############################################################################################### -->
+                    <!--                                      START OF PAGE CONTENT                                      -->
+                    <!-- ############################################################################################### -->
+
+                    <!-- =================== -->
+                    <!-- Add New Rule Button -->
+                    <!-- =================== -->
+
+                    <br>
+
+                    <div>
+                        <form method="POST" action="{{ url_for('crush_controller.rule_templates_list') }}" id="addRule">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Add Rule
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- ========================== -->
+                    <!-- End Of Add New Rule Button -->
+                    <!-- ========================== -->
+
+                    <!-- ####################################################################################### -->
+                    <br>
+                    <!-- ####################################################################################### -->
+
+                    <div>
+                        <!-- ======================= -->
+                        <!-- Start of Table of Rules -->
+                        <!-- ======================= -->
+                        <table id="rules_Table" class="table table-bordered table-striped">
+
+                            <!-- At first , check if the list of rules has any items -->
+                            <!-- --------------------------------------------------- -->
+
+                            <!-- table header -->
+                            <!-- ------------ -->
+                            <thead>
+                            <tr>
+                                <th style="width: 40%;">Rule Name</th>
+                                <th style="width: 40%;">Type</th>
+                                <th style="width: 20%;">Action</th>
+                            </tr>
+                            </thead>
+
+                            <!-- ------------------------------------------------------------------------------- -->
+
+                            {% if rule_list and rule_list|length != 0 %}
+                            <!-- table body -->
+                            <!-- ---------- -->
+                            <tbody>
+                            {% for ruleName, ruleBody in rule_list.items() %}
+                            <tr>
+                                <!-- print the name of the rule -->
+                                <td>
+                                    <a id="ShowRuleInfo" href="#" data-toggle="modal" data-target="#exampleModal"
+                                            onclick="return load_rule_info('{{ url_for('crush_controller.get_selected_rule_info', rule_name = ruleName) }}')">{{ ruleName }}</a>
+                                </td>
+
+                                <!-- print the type of the rule -->
+                                <td>
+                                    <a id="ShowRuleType" href="#" data-toggle="modal" data-target="#exampleModal"
+                                            onclick="return load_rule_info('{{ url_for('crush_controller.get_selected_rule_info', rule_name = ruleName) }}')">
+
+                                        {% if "replicated" in ruleBody %}
+                                        Replicated
+                                        {% elif "erasure" in ruleBody %}
+                                        EC
+                                        {% endif %}
+
+                                    </a>
+                                </td>
+
+                                <!-- Display Edit and Delete Buttons -->
+                                <td>
+                                    <!-- first , check if rule.is not equal to 0 :
+                                    ============================================== -->
+
+                                    {% set id_index = ruleBody.find("id") %}
+                                    {% set newline_index = ruleBody.find("\n", id_index) %}
+                                    {% set id_value = ruleBody[(id_index + 2):newline_index] %}
+                                    <!-- (id_index) is the index of letter 'i' , (id_index + 2)  means add 2 for the index because of the letter 'd' and the 'space' after the letter 'd' -->
+
+                                    {% if id_value | int == 0 %} <!-- if id == 0 : show Button " Edit " only -->
+                                    <div title="Edit Rule" class="btn-group">
+                                        <!-- Button " Edit " -->
+                                        <!-- =============== -->
+                                        <form method="POST"
+                                              action="{{ url_for('crush_controller.get_rule_by_name' , rule_id = id_value , rule_name = ruleName) }} ">
+                                            <input type="hidden" value="{{id_value}}" name="rule_id">
+                                            <button type="submit" class="btn btn-default pull-right">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+                                        </form>
+                                        <!-- End Of Button " Edit " -->
+                                    </div>
+                                    {% endif %}
+
+                                    {% if id_value | int != 0 %} <!-- if id != 0 : show " Edit " and " Delete " -->
+
+                                    <div title="Edit Rule" class="btn-group">
+                                        <!-- Button " Edit " -->
+                                        <!-- =============== -->
+                                        <form method="POST"
+                                              action="{{ url_for('crush_controller.get_rule_by_name', rule_id = id_value , rule_name = ruleName ) }} "
+                                              id="editRuleForm">
+                                            <input type="hidden" value="{{id_value}}" name="rule_id">
+                                            <button type="submit" class="btn btn-default pull-right">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+                                        </form>
+                                        <!-- End Of Button " Edit " -->
+                                    </div>
+
+                                    <div title="Delete Rule" class="btn-group">
+                                        <!-- Button " Delete " -->
+                                        <!-- ================= -->
+                                        <form action="{{ url_for('crush_controller.remove_rule', rule_name = ruleName) }}"
+                                              method="POST" id="deleteRuleForm">
+                                            <button onclick="return doDelete('{{ ruleName }}');" type="submit"
+                                            class="btn btn-default confirm">
+                                            <i class="fa fa-remove"></i>
+                                            </button>
+
+                                        </form>
+                                        <!-- End Of Button " Delete " -->
+                                    </div>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+
+
+                            </tbody>
+                            {% endif %}
+
+                        </table>
+
+                        <!-- ========================== -->
+                        <!--   End of Table of Rules    -->
+                        <!-- ========================== -->
+
+
+                        <!-- ======================================================================================= -->
+                        <!-- New --><!-- Modal Of Rule Info Pop-Up -->
+                        <!-- ===================================== -->
+                        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                            {% include "admin/crush/view_rule.html" %}
+
+                        </div>
+                        <!-- New --><!-- End Of Modal Of Rule Info Pop-Up  -->
+                        <!-- ======================================================================================= -->
+
+                    </div>
+                </div>
+
+                <!-- ############################################################################################### -->
+                <!--                                        END OF PAGE CONTENT                                      -->
+                <!-- ############################################################################################### -->
+
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+<input type="hidden" id="messages" value="{{ gettext('ui_admin_delete_rule_confirm_msg') }}">
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block sidebar_menu %}
+{{macros.nav('Crush Map','Rules')}}
+{% endblock %}
+l
+<!-- *************************************************************************************************************** -->
+
+{% block js%}
+
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+<script>
+    //$('#rules_Table').DataTable();
+    $(function () {
+        $("#rules_Table").DataTable({
+            "columnDefs": [
+                {"orderable": false, "targets": [1,2]}
+            ]
+        });
+    });
+
+    var messages = $("#messages").val();
+    function doDelete(rule_name) {
+        var final_message = messages.replace('$', rule_name);
+        var confirm_var = confirm(final_message);
+        if (confirm_var == true) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+</script>
+
+<script src="/static/dist/js/pages/crush/rule.js?v=7777777"></script>
+
+{% endblock %}
+

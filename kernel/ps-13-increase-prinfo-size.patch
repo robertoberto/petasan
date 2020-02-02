@@ -1,0 +1,14 @@
+diff -upr -x '*.[^ch]' a/drivers/target/target_core_rbd.c b/drivers/target/target_core_rbd.c
+--- a/drivers/target/target_core_rbd.c	2018-07-17 09:44:50.000000000 +0200
++++ b/drivers/target/target_core_rbd.c	2018-08-28 00:23:56.000000000 +0200
+@@ -719,8 +719,8 @@ static bool tcm_rbd_get_write_cache(stru
+ #define TCM_RBD_PR_INFO_XATTR_VAL_SCSI3_RSV_ABSENT	"No SPC-3 Reservation holder"
+ #define TCM_RBD_PR_INFO_XATTR_VAL_SCSI2_RSV_ABSENT	"No SPC-2 Reservation holder"
+ 
+-/* don't allow encoded PR info to exceed 8K */
+-#define TCM_RBD_PR_INFO_XATTR_MAX_SIZE 8192
++/* don't allow encoded PR info to exceed 80K */
++#define TCM_RBD_PR_INFO_XATTR_MAX_SIZE 81920
+ 
+ /*
+  * TRANSPORT_IQN_LEN + strlen(",i,0x") + sizeof(u64) * 2 + strlen(",")

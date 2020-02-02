@@ -1,0 +1,123 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+
+{% endblock %}
+
+{% block title %}<title>Path Assignment List</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-server"></i> Path Assignment</li>
+    <li><i class="fa fa-list"></i> Path Assignment List</li>
+</ol>
+{% endblock %}
+{% block content_header %}Path Assignment List{% endblock %}
+{% block content %}
+<section class="content">
+
+    <div class="row">
+
+        <div class="col-xs-12">
+
+            <div class="box">
+
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div>
+                        <div class="col-md-12">
+                            <div class="alert alert-info alert-dismissable" id="status_assign">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+                                    ×
+                                </button>
+                                <h4><i class="icon fa fa-info"></i>Info</h4>
+                                <h4>Paths re-assignment in progress...</h4>
+
+                                <div class="row">
+                                    <div class="col-md-2"><h4 id="total"></h4></div>
+                                    <div class="col-md-2"><h4 id="moved"></h4></div>
+                                    <div class="col-md-2"><h4 id="failed"></h4></div>
+                                    <div class="col-md-2"><h4 id="moving"></h4></div>
+                                    <div class="col-md-4"><h4 id="pending"></h4></div>
+                                    <div class="row"></div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="form-group">
+                        <div class="form-group">
+                            <div class="col-md-10 form-group">
+                                <div style="margin-left: 6%">
+                                <a id="collapse_all" onclick="$.fn.collapseAll()" class="btn btn-primary"
+                                   data-toggle="tooltip" title="Collapse All"><i
+                                        class="glyphicon glyphicon-chevron-right"></i><i
+                                        class="glyphicon glyphicon-chevron-right"></i></a>
+                                <a id="expand_all" onclick="$.fn.expandAll()"
+                                   class="btn btn-primary" data-toggle="tooltip" title="Expand All"><i
+                                        class="glyphicon glyphicon-chevron-down"></i>&nbsp;<i
+                                        class="glyphicon glyphicon-chevron-down"></i></a>
+                            </div>
+                                </div>
+                            <div class="col-md-2 form-group">
+                                <form action="{{ url_for('disk_controller.paths_assign') }}" method="get"
+                                      id="reassign_path">
+
+                                    <button class="btn btn-primary pull-right" id="reassign_button" type="submit">
+                                        Reassign Paths
+                                    </button>
+
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="col-md-12">
+                            <div id="paths_table"></div>
+                        </div>
+                    </div>
+                    <div id="node_list"></div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{ macros.nav('Manage iSCSI Disks','Path Assignment') }}
+
+{% endblock %}
+
+
+{% block js %}
+
+<script src="/static/dist/js/pages/disk/paths.js"></script>
+<script src="/static/dist/js/pages/disk/path_assignment_list.js?v=7777777"></script>
+<script>
+    var get_disks_paths = "{{ url_for('disk_controller.get_assignments_status') }}"
+</script>
+
+{% endblock %}
+

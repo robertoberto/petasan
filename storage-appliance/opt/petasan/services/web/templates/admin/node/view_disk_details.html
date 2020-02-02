@@ -1,0 +1,124 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+<!-- Modal -->
+
+<div class="modal-dialog" role="document" style="width: 60%">
+    <div class="modal-content">
+
+        <!-- Modal Header -->
+        <!-- ============ -->
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true"> X </span>
+            </button>
+            <h4 class="modal-title">Disk Information</h4>
+        </div>
+
+        <!--  Modal Body  -->
+        <!-- ============ -->
+        <div class="modal-body">
+            <div class="box-body">
+
+                <div id="img_for_details" style="display: block; align-content: center; text-align: center;" >
+
+                    <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+                    <p id="loading" name='loading' class="text-muted">
+                        <h3 class="box-title">Loading</h3>
+                    </p>
+
+                </div>
+
+
+                <div id="diskInfoArea" style="display: none">
+
+                <div class="col-sm-6" >
+
+                    <div id="name">
+                        <label> Name: </label>
+                        <p id='name_val'></p>
+                    </div>
+                    <div id="disk_size" >
+                        <label> Size: </label>
+                        <p id='size_val'></p>
+                    </div>
+                    <div id="ssd" >
+                        <label> SSD: </label>
+                        <p id='ssd_val'></p>
+                    </div>
+                    <div id="model" >
+                        <label> Model: </label>
+                        <p id='model_val'></p>
+                    </div>
+                    <div id="vendor" >
+                        <label> Vendor: </label>
+                        <p id='vendor_val'></p>
+                    </div>
+                    <div id="smart_test" >
+                        <label> SMART Test: </label>
+                        <p id='smart_test_val'></p>
+                    </div>
+
+                </div>
+                <div class="col-sm-6" >
+                    <div id="type" >
+                        <label> Type: </label>
+                        <p id='type_val'></p>
+                    </div>
+                    <div id="serial" >
+                        <label> Serial: </label>
+                        <p id='serial_val'></p>
+                    </div>
+
+                    <div id="used" >
+                        <label> Usage: </label>
+                        <p id='used_val'></p>
+                    </div>
+                    <div id="status" >
+                        <label> Status: </label>
+                        <p id='status_val'></p>
+                    </div>
+                    <div id="avail_partitions" hidden>
+                        <label> Available Partitions: </label>
+                        <p id='avail_partitions_val'></p>
+                    </div>
+                    <div id="linked_devices" hidden>
+                        <label> Linked Devices: </label>
+                        <p id='linked_devices_val'></p>
+                    </div>
+                    <div id="linked_osds" hidden>
+                        <label> Linked OSDs:</label><small id="partition_title"> </small>
+                        <p id='linked_osds_val'></p>
+                    </div>
+
+
+
+                </div>
+
+                </div>
+                <!-- *********************************** -->
+
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal -->

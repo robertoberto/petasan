@@ -1,0 +1,185 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}{% endblock %}
+{% block content %}
+<section class="content">
+
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">2</span>Step 2<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">3</span>Step 3<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">4</span>Step 4<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">5</span>Step 5<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">6</span>Step 6<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">7</span>Step 7<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">8</span><label style="color:#605ca8">Step 8</label><span
+                        class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step5">
+
+                <h4>Final Deployment Stage </h4>
+
+                <form id="build_cluster_form" method="post" action="">
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <div class="box ">
+
+
+                                <div class="box-body">
+                                    <!-- message area -->
+                                    {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+
+                                    <div id="sucessDone" style="display: none"
+                                         class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h5><i class="icon fa fa-check"></i>{{ gettext("ui_deploy_build_suc_done") }}
+                                        </h5>
+
+                                    </div>
+
+                                    <div id="urlMsg" style="display: none">Use any of the following Cluster Management
+                                        URLs to manage your cluster:
+                                    </div>
+
+                                    <div id="managementUrls" style="padding-left: 15px;display: none"><a id="urls1"
+                                                                                                         href=""></a>
+                                    </div>
+                                    <div id="managementUrl2" style="padding-left: 15px;display: none"><a id="urls2"
+                                                                                                         href=""></a>
+                                    </div>
+                                    <div id="managementUrl3" style="padding-left: 15px;display: none"><a id="urls3"
+                                                                                                         href=""></a>
+                                    </div>
+                                    <div id="sucessDoneJoined" style="display: none"
+                                         class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h5><i class="icon fa fa-check"></i>{{
+                                            gettext("ui_deploy_build_suc_done_joined") }}</h5>
+
+                                    </div>
+
+                                    <div id="sucessDoneReplaced" style="display: none"
+                                         class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h5><i class="icon fa fa-check"></i>{{
+                                            gettext("ui_deploy_build_suc_done_replaced") }}</h5>
+
+                                    </div>
+                                    <div id="sucessOneManagement" style="display: none"
+                                         class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h5><i class="icon fa fa-check"></i>{{
+                                            gettext("ui_deploy_build_suc_one_management") }}
+                                        </h5>
+
+                                    </div>
+                                    <div id="sucessTwoManagement" style="display: none"
+                                         class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h5><i class="icon fa fa-check"></i>{{
+                                            gettext("ui_deploy_build_suc_two_management") }}</h5>
+
+                                    </div>
+                                    <div id="error" style="display: none" class="alert alert-danger alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h4><i class="icon fa fa-ban"></i>{{ gettext("ui_deploy_build_err") }}</h4>
+                                        {{err}}
+                                    </div>
+                                    <div id="error_deploy" style="display: none" class="alert alert-danger alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h4><i class="icon fa fa-ban"></i>{{ gettext("ui_deploy_node_err") }}</h4>
+                                        {{err}}
+                                    </div>
+                                    <div id="warning" style="display: none"
+                                         class="alert alert-warning alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×
+                                        </button>
+                                        <h4><i class="icon fa fa-warning"></i>Warning </h4>
+                                        {{ gettext("ui_deploy_build_warning") }}
+                                    </div>
+                                    <div id="report_status" style="display: none;" class="form-group">
+                                        <h3 class="box-title">Error List</h3>
+
+                                        <p id="reportStatus" name='reportStatus' class="text-muted"></p>
+                                    </div>
+                                    <div id="StateAll" style="display: none;"><a href="/state_all">Download Cluster State Logs</a>
+                                    </div>
+                                    <div class="col-md-3">
+
+
+                                    </div>
+                                    <div class="col-md-6">
+
+                                        <div id="img" style="display: none; align-content: center; text-align: center;">
+
+                                            <img src="../../static/dist/img/credit/loading.gif"
+                                                 style="height: 150px; width: 150px;">
+
+                                            <p id="loading" name='loading' class="text-muted">
+
+                                            <h3 class="box-title">Processing...</h3>  </p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+
+                                    </div>
+                                </div>
+
+
+                                <!--<div class="box-footer">-->
+                                <!--<button id="complete" type="button" onclick="return displayLoading();"  class="btn btn-primary pull-right">Build</button>-->
+                                <!--</div>-->
+
+                            </div>
+                            <!-- /.box -->
+                            <!--/row-->
+
+
+                            <!-- /.col (left) -->
+
+                            <!-- /.col (right) -->
+                        </div>
+                    </div>
+                        <!-- /.row -->
+                </form>
+            </div>
+
+
+        </div>
+    </div>
+
+</section><!-- /.content -->
+{% endblock %}
+
+
+{% block js%}
+<script src=".../../../static/dist/js/pages/cluster/build.js?v=7777777"></script>
+{% endblock %}

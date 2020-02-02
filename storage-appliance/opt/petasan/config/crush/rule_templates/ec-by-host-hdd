@@ -1,0 +1,15 @@
+{
+# Placement rule per PG/object in EC Pool
+# Choose K+M distinct hosts
+# For each, choose a single HDD OSD disk
+
+id 0
+type erasure
+min_size 3
+max_size 20
+step set_chooseleaf_tries 5
+step set_choose_tries 100
+step take default class hdd
+step chooseleaf indep 0 type host
+step emit
+}

@@ -1,0 +1,459 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.css">
+<link rel="stylesheet" href="/static/plugins/ionslider/css/ion.rangeSlider.skinModern.css">
+<link rel="stylesheet" href="/static/plugins/bootstrap-slider/slider.css">
+<link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+<script src="/static/dist/js/demo.js"></script>
+<script src="/static/plugins/ionslider/js/ion.rangeSlider.min.js"></script>
+<script src="/static/plugins/bootstrap-slider/bootstrap-slider.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+{% endblock %}
+
+{% block title%}<title>Add iSCSI Disk</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-server"></i> Manage iSCSI Disks</li>
+    <li><i class="fa fa-list"> </i> <a href="{{ url_for('disk_controller.disk_list') }}"> iSCSI Disks</a></li>
+    <li><i class="fa fa-hdd-o"></i> Add iSCSI Disk</li>
+</ol>
+{% endblock %}
+{% block content_header%}Add iSCSI Disk{% endblock %}
+{% block content %}
+<section class="content">
+    <form id="add_task_form" method="post" action="{{ url_for('disk_controller.save_disk') }}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box  box-default">
+
+                    <!-- -----------------------------------  Start of : box-body  --------------------------------- -->
+                    <div class="box-body">
+                        <!-- message area -->
+                        {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                        <!--/ message area -->
+
+                        <!-- ----------------------------------  First : col-md-6  --------------------------------- -->
+                        <!-- ======================================================================================= -->
+                        <div class="col-md-6">
+
+
+                            <!-- ...................................   Disk Name   ................................. -->
+                            <div class="form-group">
+                                <label id="lblDiskName"><i class=""></i>Disk Name:<font color="red">*</font></label>
+                                <input class="form-control" maxlength="50" placeholder="Disk Name..." type="text"
+                                       id="diskName" autocomplete="off" value="{{form.diskName}}" name="diskName">
+                            </div>
+
+
+                            <!-- ...................................   Disk Size   ................................. -->
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-lg-9">
+                                        <input id="diskSizeExactValue" name="diskExactSize" class="form-control"
+                                               type="hidden" value="{{form.diskSize}}">
+                                        <input id="diskSize" type="text" class="form-control" name="diskSize" value="{{form.diskSize}}">
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <label id="lblDiskSize" class="control-label" for="diskSizeVal">Size:</label>
+
+                                        <div class="input-group">
+                                            <input id="diskSizeVal" name="diskSize" maxlength="20" class="form-control"
+                                                   type="text" value="{{form.diskSize}}">
+                                            <span class="input-group-addon" id="lblDiskValUnit">GB</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            <input type="hidden" id="form_pool_type" value="{{form.pool_type}}">
+                            <input type="hidden" id="form_replicated_pool" value="{{form.pool}}">
+                            <input type="hidden" id="form_erasure_pool" value="{{form.erasure_pool}}">
+
+
+
+
+                            <!-- ...................................   Pool Type   ................................. -->
+                            <div class="form-group">
+                                <div><label>Pool Type:</label></div>
+
+                                <div class="col-md-3">
+                                    <label class="radio-inline"><input type="radio" name="pool_type"  checked
+                                                                       id="replicated" onchange="onChangePoolType(id);"
+                                                                       value="replicated">Replicated</label>
+                                </div>
+                                <div class="col-md-9" style="">
+                                    <label class="radio-inline"><input type="radio" name="pool_type"
+                                                                       id="erasure" onchange="onChangePoolType(id);"
+                                                                       value="erasure">EC</label>
+                                </div>
+
+                            </div>
+
+                            <!-- ----------------------------------------------------------------------------------- -->
+                            <!-- This "Div" is for separation only -->
+                            <div class="row form-group" style="margin-top: 20px"></div>
+                            <!-- ----------------------------------------------------------------------------------- -->
+
+
+                            <!-- ..............................   Pools ( Rep or EC )   ............................ -->
+                            <div class="row">
+                                <div class="form-group">
+
+                                    <!-- " Pool " -->
+                                    <!-- -------- -->
+                                    <div class="col-md-4">
+
+                                        <label id="lblPools"><i class=""></i>Pool:<font color="red">*</font></label>
+
+                                        <div class="input-group" style="width:100%;">
+                                            <select class="form-control" id="pool" name="pool">
+                                                {% for pool in replicated_pools %}
+                                                <option value="{{ pool }}">{{ pool }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- " Plus " -->
+                                    <!-- -------- -->
+                                    <div class="col-md-1" style="text-align: center;" id="plus" hidden>
+                                        <label>&nbsp;</label>
+
+                                        <div>
+                                            <label class="control-label" style="font-size: 20px;" >+</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- " Data Pool " -->
+                                    <!-- ------------- -->
+                                    <div class="col-md-4" id="erasure_pool_section" hidden>
+                                        <label id="er_lblPools"><i class=""></i>Data Pool:<font
+                                                color="red">*</font></label>
+
+                                        <div class="input-group" style="width:100%;">
+                                            <select class="form-control" id="er_pool" name="erasure_pool">
+                                                {% for pool in erasure_pools %}
+                                                <option value="{{ pool }}">{{ pool }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- This "Div" is for a space only -->
+                            <div class="form-group" style="margin-top: 10px">
+
+                            </div>
+
+
+                            <!-- ..................................   Active Paths   ............................... -->
+                            <div class="row form-group"></div>
+                            <div class="form-group">
+                                <label id="lblActivePaths"><i class=""></i>Active Paths:</label>
+
+                                <div class="input-group">
+                                    <input id="ActivePaths" name="ActivePaths" class="form-control"
+                                           type="number" min="1" max="8" step="1" value="{{ form.ActivePaths }}"
+                                           style="width: 144px;">
+                                </div>
+                            </div>
+
+
+                            <!-- ..................................   iSCSI Subnet   ............................... -->
+                            <div class="form-group">
+                                <label id="lblISCSISubnet">iSCSI Subnet:<font color="red">*</font></label>
+
+                                <div class="input-group">
+                                    <select class="form-control" id="ISCSISubnet" name="ISCSISubnet"
+                                            style="width: 144px;">
+                                        <option value="0" {% if form.ISCSISubnet=="0" %} selected="selected" {% endif
+                                                %}>-----
+                                        </option>
+                                        <option value="1" {% if form.ISCSISubnet=="1" %} selected="selected" {% endif
+                                                %}>iSCSI Subnet 1
+                                        </option>
+                                        <option value="2" {% if form.ISCSISubnet=="2" %} selected="selected" {% endif
+                                                %}>iSCSI Subnet 2
+                                        </option>
+                                        <option value="3" {% if form.ISCSISubnet=="3" %} selected="selected" {% endif
+                                                %}>Both
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+                            <input type="hidden" id="failed_pools" value="{{ failed_pools }}" name="failed_pools">
+
+
+                            <!-- ...................................   Ip address   ................................ -->
+                            <div class="form-group">
+                                <label id="lblIpAddressRange "><i class=""></i>Auto assign IP address:
+                                </label>
+
+                                <div class="form-group">
+                                    <div class="col-md-2">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="orpUseFirstRange" id="orpUseFirstRangeYes"
+                                                       value="Yes"
+                                                       {% if form.orpUseFirstRange=="Yes" %} checked {% endif %}
+                                                       type="radio">
+                                                Yes
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="orpUseFirstRange" id="orpUseFirstRangeNo"
+                                                       value="No"
+                                                       {% if form.orpUseFirstRange=="No" %} checked {% endif %}
+                                                       type="radio">
+                                                No
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+                            <!-- .....................................   Path 1   .................................. -->
+                            <div class="form-group" id="divPath1">
+                                <label id="lblPath1">Path 1:<font color="red">*</font><i class=""></i></label>
+
+                                <div class="input-group">
+                                    <div class="input-group-addon">
+                                        <i class="fa fa-laptop"></i>
+                                    </div>
+                                    <input type="text" class="form-control" data-inputmask="'alias': 'ip'" data-mask
+                                           id="path1Val" name="path1" value="{{form.path1}}">
+                                </div>
+                            </div>
+
+
+                            <!-- .....................................   Path 2   .................................. -->
+                            <!-- IP mask -->
+                            <div class="form-group" id="divPath2">
+                                <label id="lblPath2">Path 2:<font color="red">*</font></label>
+
+                                <div class="input-group">
+                                    <div class="input-group-addon">
+                                        <i class="fa fa-laptop"></i>
+                                    </div>
+                                    <input type="text" class="form-control" data-inputmask="'alias': 'ip'" data-mask
+                                           id="path2Val" name="path2" value="{{form.path2}}">
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                        <!-- ---------------------------------  Second : col-md-6  --------------------------------- -->
+                        <!-- ======================================================================================= -->
+
+                        <div class="col-md-6">
+
+                            <!-- .............................   authentication password   ......................... -->
+                            <div class="form-group">
+                                <label id="lblAuth"><i class=""></i>Password Authentication:</label>
+
+                                <div class="form-group">
+                                    <div class="col-md-2">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="orpAuth" id="orpAuthYes" value="Yes"
+                                                       {% if form.orpAuth=="Yes" %} checked {% endif %}
+                                                       type="radio">
+                                                Yes
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="orpAuth" id="orpAuthNo" value="No"
+                                                       {% if form.orpAuth=="No" %} checked {% endif %}
+                                                       type="radio">
+                                                No
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ....................................   user name   ................................ -->
+                            <div class="form-group" id="divUserName">
+                                <label class="control-label" id="lblUserName" for="UserNameVal">User Name:<font
+                                        color="red">*</font></label>
+                                <input name="UserName" class="form-control" id="UserNameVal" placeholder="User name ..."
+                                       type="text" autocomplete="off" value="{{form.UserName}}">
+                            </div>
+
+
+                            <!-- .....................................   password   ................................ -->
+                            <div class="form-group" id="divPassword">
+                                <label for="PasswordVal" id="lblPass">Password:<font color="red">*</font><i
+                                        class=""></i></label>
+                                <input name="Password" class="form-control" id="PasswordVal" placeholder=""
+                                       type="password" autocomplete="off" value="{{form.Password}}">
+                            </div>
+
+
+                            <!-- .................................   confirm password   ............................ -->
+                            <div class="form-group" id="divConfirmPassword">
+                                <label for="ConfirmPasswordVal" id="lblConfirmPass">Confirm Password:<font
+                                        color="red">*</font><i class=""></i></label>
+                                <input class="form-control" id="ConfirmPasswordVal" placeholder="" type="password"
+                                       autocomplete="off" value="{{form.Password}}">
+                            </div>
+
+
+                            <!-- ....................................   Client ACL   ............................... -->
+                            <div class="form-group">
+                                <label id="lblACL"><i class=""></i> Client ACL:</label>
+
+                                <div class="form-group">
+                                    <div class="col-md-2">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="orpACL" id="orpAclAll" value="All"
+                                                       {% if form.orpACL=="All" %} checked {% endif %}
+                                                       type="radio">
+                                                All
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="orpACL" id="orpAclIqn" value="Iqn"
+                                                       {% if form.orpACL=="Iqn" %} checked {% endif %}
+                                                       type="radio">
+                                                <label id="lblIqnVal" style="padding-left: 0px;">IQN(s)</label>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group">
+                                    <input class="form-control" placeholder="Iqn,Iqn,....." type="text" id="IqnVal"
+                                           name="IqnVal" value="{{form.IqnVal}}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class=""></i> Enable Replication:</label><i data-toggle="tooltip" data-placement="right"
+                                               title='{{ gettext("ui_admin_enable_replication_explanation") }}'
+                                               class="fa fa-fw fa-info-circle"></i>
+
+                                <div class="form-group">
+                                    <div class="col-md-2">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="replication" id="rep_yes" value="yes"
+                                                       type="radio">
+                                                Yes
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="replication" id="rep_no" value="no" checked
+                                                       type="radio">No
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+
+                        </div>
+
+
+                    </div>
+                    <!-- ------------------------------------  End of : box-body  ---------------------------------- -->
+
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary pull-right" value="submit">Save</button>
+                        <button type="button" style="margin-right: 10px" class="btn btn-default pull-right"
+                                id="cancelBtn" value="cancel">Cancel
+                        </button>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Manage Disk','Add iSCSI Disk')}}
+{% endblock %}
+
+
+{% block js%}
+<!--Add Disk -->
+<script src="/static/dist/js/pages/disk/add_disk.js?v=7777777"></script>
+<script>
+    var path = "{{ url_for('disk_controller.disk_list') }}";
+    set_cancel_add(path);
+    size_list = '{{ size_list }}';
+    set_slider_add(size_list);
+    var messages = {}
+    messages.add_disk_lbl_size_empty = '{{ gettext("ui_admin_manage_disk_lbl_size_empty") }}';
+    messages.add_disk_lbl_size_invalid = '{{ gettext("ui_admin_manage_disk_lbl_size_invalid") }}';
+    messages.add_disk_lbl_name_empty = '{{ gettext("ui_admin_manage_disk_lbl_name_empty") }}';
+    messages.add_disk_lbl_name_length = '{{ gettext("ui_admin_manage_disk_lbl_name_length") }}';
+    messages.add_disk_lbl_subnet_empty = '{{ gettext("ui_admin_manage_disk_lbl_subnet_empty") }}';
+    messages.add_disk_lbl_path1_invalid = '{{ gettext("ui_admin_manage_disk_lbl_path1_invalid") }}';
+    messages.add_disk_lbl_path2_invalid = '{{ gettext("ui_admin_manage_disk_lbl_path2_invalid") }}';
+    messages.add_disk_lbl_iqn_empty = '{{ gettext("ui_admin_manage_disk_lbl_iqn_empty") }}';
+    messages.add_disk_lbl_iqn_invalid = '{{ gettext("ui_admin_manage_disk_lbl_iqn_invalid") }}';
+    messages.add_disk_lbl_username_empty = '{{ gettext("ui_admin_manage_disk_lbl_username_empty") }}';
+    messages.add_disk_lbl_username_length = '{{ gettext("ui_admin_manage_disk_lbl_username_length") }}';
+    messages.add_disk_lbl_password_empty = '{{ gettext("ui_admin_manage_disk_lbl_password_empty") }}';
+    messages.add_disk_lbl_password_length = '{{ gettext("ui_admin_manage_disk_lbl_password_length") }}';
+    messages.add_disk_lbl_confirm_password_empty = '{{ gettext("ui_admin_manage_disk_lbl_confirm_password_empty") }}';
+    messages.add_disk_lbl_confirm_password_mismatch = '{{ gettext("ui_admin_manage_disk_lbl_confirm_password_mismatch") }}';
+    messages.add_disk_lbl_data_pool = '{{ gettext("ui_admin_add_disk_lbl_data_pool") }}';
+
+</script>
+
+<script>
+    var failed_pools;
+    failed_pools = $('#failed_pools').val();
+</script>
+{% endblock %}

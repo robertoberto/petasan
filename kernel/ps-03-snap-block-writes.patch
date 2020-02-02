@@ -1,0 +1,192 @@
+diff -uprN a/drivers/block/rbd.c b/drivers/block/rbd.c
+--- a/drivers/block/rbd.c	2019-07-20 17:20:14.177229329 +0200
++++ b/drivers/block/rbd.c	2019-07-20 17:06:08.000000000 +0200
+@@ -1352,11 +1352,17 @@ static void rbd_obj_request_submit(struc
+ 	ceph_osdc_start_request(osd_req->r_osdc, osd_req, false);
+ }
+ 
++static enum obj_operation_type
++rbd_img_request_op_type(struct rbd_img_request *img_request);
++
+ static void rbd_img_request_complete(struct rbd_img_request *img_request)
+ {
+ 
+ 	dout("%s: img %p\n", __func__, img_request);
+ 
++	if( rbd_img_request_op_type(img_request) != OBJ_OP_READ ) 
++		atomic_dec(&img_request->rbd_dev->inflight_write_requests);
++
+ 	/*
+ 	 * If no error occurred, compute the aggregate transfer
+ 	 * count for the image request.  We could instead use
+@@ -3040,6 +3046,9 @@ int rbd_img_request_submit(struct rbd_im
+ 			goto out_put_ireq;
+ 	}
+ 
++	if( rbd_img_request_op_type(img_request) != OBJ_OP_READ ) 
++		atomic_inc(&img_request->rbd_dev->inflight_write_requests);
++
+ out_put_ireq:
+ 	rbd_img_request_put(img_request);
+ 	return ret;
+@@ -3794,6 +3803,57 @@ out_unlock:
+ 	return result;
+ }
+ 
++static void rbd_handle_pre_snap(struct rbd_device *rbd_dev, u8 struct_v,
++				     void **p)
++{
++	u32 max_wait_sec = 5;
++	u32 sleep_ms = 100;
++	u32 count = max_wait_sec * 1000 / sleep_ms;
++	struct rbd_client_id cid = { 0 };
++	u32 flush_delay;
++
++	if (struct_v >= 2) {
++		cid.gid = ceph_decode_64(p);
++		cid.handle = ceph_decode_64(p);
++	}
++
++	flush_delay = ceph_decode_32(p);			
++	atomic_set(&rbd_dev->block_writes, 1);
++
++	while(0 < atomic_read(&rbd_dev->inflight_write_requests) ) {
++
++		pr_info("%s rbd_dev %p inflight_write_requests %ul",
++			__func__, rbd_dev, 
++			atomic_read(&rbd_dev->inflight_write_requests));
++
++		msleep(sleep_ms);
++		if(--count < 1) {
++			rbd_warn(rbd_dev,"%s timeout",__func__);
++			break;
++		}
++	}
++}
++
++void rbd_dev_wait_on_bloked_writes(struct rbd_device *rbd_dev, u32 sec)
++{
++	u32 max_wait_sec = sec;
++	u32 sleep_ms = 100;
++	u32 count = max_wait_sec * 1000 / sleep_ms;
++
++	while (rbd_dev_block_writes(rbd_dev)) {
++
++		pr_info("%s rbd_dev %p blocking", __func__, rbd_dev);
++
++		msleep(sleep_ms);
++		if(--count < 1) {
++			rbd_warn(rbd_dev,"%s timeout", __func__);
++			atomic_set(&rbd_dev->block_writes, 0);
++			break;
++		}
++	}
++}
++EXPORT_SYMBOL(rbd_dev_wait_on_bloked_writes);
++
+ static void __rbd_acknowledge_notify(struct rbd_device *rbd_dev,
+ 				     u64 notify_id, u64 cookie, s32 *result)
+ {
+@@ -3885,16 +3945,25 @@ static void rbd_watch_cb(void *arg, u64
+ 			rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
+ 		break;
+ 	case RBD_NOTIFY_OP_HEADER_UPDATE:
++		pr_info("%s rbd_dev %p RBD_NOTIFY_OP_HEADER_UPDATE", 
++			__func__, rbd_dev);
+ 		ret = rbd_dev_refresh(rbd_dev);
+ 		if (ret)
+ 			rbd_warn(rbd_dev, "refresh failed: %d", ret);
+ 
++		atomic_set(&rbd_dev->block_writes, 0);
+ 		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
+ 		break;
+ 	case RBD_NOTIFY_OP_SCSI_PR_UPDATE:
+ 		rbd_handle_scsi_pr_update(rbd_dev, struct_v, &p);
+ 		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
+ 		break;
++	case RBD_NOTIFY_OP_PRE_SNAP:
++		pr_info("%s rbd_dev %p RBD_NOTIFY_OP_PRE_SNAP", 
++			__func__, rbd_dev);
++		rbd_handle_pre_snap(rbd_dev, struct_v, &p);
++ 		rbd_acknowledge_notify(rbd_dev, notify_id, cookie);
++ 		break;
+ 	default:
+ 		if (rbd_is_lock_owner(rbd_dev))
+ 			rbd_acknowledge_notify_result(rbd_dev, notify_id,
+@@ -4234,6 +4303,9 @@ static void rbd_queue_workfn(struct work
+ 
+ 	blk_mq_start_request(rq);
+ 
++	if (op_type != OBJ_OP_READ && rbd_dev_block_writes(rbd_dev)) 
++		rbd_dev_wait_on_bloked_writes(rbd_dev, 20);
++
+ 	down_read(&rbd_dev->header_rwsem);
+ 	mapping_size = rbd_dev->mapping.size;
+ 	if (op_type != OBJ_OP_READ) {
+@@ -5217,6 +5289,9 @@ static struct rbd_device *__rbd_dev_crea
+ 	rbd_dev->pr_dirty = true;
+ 	rbd_dev->pr_cache_ts = jiffies;
+ 
++        atomic_set(&rbd_dev->inflight_write_requests, 0);
++        atomic_set(&rbd_dev->block_writes, 0);
++
+ 	return rbd_dev;
+ }
+ 
+diff -uprN a/drivers/block/rbd_types.h b/drivers/block/rbd_types.h
+--- a/drivers/block/rbd_types.h	2019-07-20 17:20:14.177229329 +0200
++++ b/drivers/block/rbd_types.h	2019-07-20 17:08:46.000000000 +0200
+@@ -38,6 +38,7 @@ enum rbd_notify_op {
+ 	RBD_NOTIFY_OP_REQUEST_LOCK       = 2,
+ 	RBD_NOTIFY_OP_HEADER_UPDATE      = 3,
+ 	RBD_NOTIFY_OP_SCSI_PR_UPDATE	 = 100,
++	RBD_NOTIFY_OP_PRE_SNAP           = 101,
+ };
+ 
+ /*
+diff -uprN a/drivers/target/target_core_rbd.c b/drivers/target/target_core_rbd.c
+--- a/drivers/target/target_core_rbd.c	2019-07-20 17:20:14.177229329 +0200
++++ b/drivers/target/target_core_rbd.c	2019-07-20 17:14:00.000000000 +0200
+@@ -291,6 +291,8 @@ tcm_rbd_execute_cmd(struct se_cmd *cmd,
+ 	int ret;
+ 
+ 	if (op_type == OBJ_OP_WRITE || op_type == OBJ_OP_WRITESAME) {
++		if (rbd_dev_block_writes(rbd_dev)) 
++			rbd_dev_wait_on_bloked_writes(rbd_dev, 20);
+ 		down_read(&rbd_dev->header_rwsem);
+ 		snapc = rbd_dev->header.snapc;
+ 		ceph_get_snap_context(snapc);
+@@ -437,6 +439,8 @@ static sense_reason_t tcm_rbd_execute_cm
+ 	unsigned int len = cmd->t_task_nolb * dev->dev_attrib.block_size;
+ 	int ret;
+ 
++	if (rbd_dev_block_writes(rbd_dev)) 
++		rbd_dev_wait_on_bloked_writes(rbd_dev, 20);
+ 	down_read(&rbd_dev->header_rwsem);
+ 	snapc = rbd_dev->header.snapc;
+ 	ceph_get_snap_context(snapc);
+diff -uprN a/include/linux/ceph/librbd.h b/include/linux/ceph/librbd.h
+--- a/include/linux/ceph/librbd.h	2019-07-20 17:20:14.177229329 +0200
++++ b/include/linux/ceph/librbd.h	2019-07-20 17:18:31.000000000 +0200
+@@ -179,6 +179,10 @@ struct rbd_device {
+ 	char			*pr_cached;	/* cached pr string */ 
+ 	bool			pr_dirty;
+ 	unsigned long 		pr_cache_ts;	
++
++	/* block writes during snapshots */
++	atomic_t		inflight_write_requests;
++	atomic_t		block_writes;
+ };
+ 
+ extern struct rbd_img_request *rbd_img_request_create(
+@@ -206,4 +210,10 @@ extern int rbd_dev_getxattr(struct rbd_d
+ 
+ extern void rbd_notify_scsi_pr_update(struct rbd_device *rbd_dev);
+ 
++inline bool rbd_dev_block_writes(struct rbd_device *rbd_dev)
++{
++	return atomic_read(&rbd_dev->block_writes);
++}
++extern void rbd_dev_wait_on_bloked_writes(struct rbd_device *rbd_dev, u32 sec);
++
+ #endif

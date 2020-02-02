@@ -1,0 +1,28 @@
+diff -upr -x '*.[^ch]' a/drivers/target/target_core_rbd.c b/drivers/target/target_core_rbd.c
+--- a/drivers/target/target_core_rbd.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/target/target_core_rbd.c	2018-07-19 14:59:36.000000000 +0200
+@@ -1668,12 +1668,13 @@ tcm_rbd_execute_pr_read_keys(struct se_c
+ 	dout("packed gen %u in read_keys response\n", pr_info->gen);
+ 
+ 	list_for_each_entry(reg, &pr_info->regs, regs_node) {
++		add_len += 8;
+ 		/*
+ 		 * Check for overflow of 8byte PRI READ_KEYS payload and
+ 		 * next reservation key list descriptor.
+ 		 */
+-		if ((add_len + 8) > (buf_len - 8))
+-			break;
++		if (add_len > (buf_len - 8))
++			continue;
+ 
+ 		buf[off++] = ((reg->key >> 56) & 0xff);
+ 		buf[off++] = ((reg->key >> 48) & 0xff);
+@@ -1684,8 +1685,6 @@ tcm_rbd_execute_pr_read_keys(struct se_c
+ 		buf[off++] = ((reg->key >> 8) & 0xff);
+ 		buf[off++] = (reg->key & 0xff);
+ 		dout("packed key 0x%llx in read_keys response\n", reg->key);
+-
+-		add_len += 8;
+ 	}
+ 
+ 	buf[4] = ((add_len >> 24) & 0xff);

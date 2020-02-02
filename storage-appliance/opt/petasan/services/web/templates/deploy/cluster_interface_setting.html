@@ -1,0 +1,372 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}{% endblock %}
+{% block content %}
+
+<section class="content">
+    <div id="myWizard" class="wizard">
+        {# ============================================= Steps Bar ============================================= #}
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">2</span>Step 2<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">3</span><label style="color:#605ca8">Step 3</label><span
+                        class="chevron"></span></li>
+                <li><span class="badge">4</span>Step 4<span class="chevron"></span></li>
+                <li><span class="badge">5</span>Step 5<span class="chevron"></span></li>
+                <li><span class="badge">6</span>Step 6<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        {# ========================================================================================================= #}
+
+
+        {# =========================================== Step Content ============================================ #}
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+                <h4>Cluster NIC Settings</h4>
+
+                <form id="cluster_interface_setting"
+                      action="{{ url_for('wizard_controller.save_cluster_interface_setting') }}" method="post">
+
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="box box-default">
+                                <div class="box-body">
+
+                                    {# ============================== Jumbo Frames ============================== #}
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="col-md-3" style="text-align: left;padding-left: 0px;">
+                                                <i class=""></i>Use Jumbo Frames:<font color="red">*</font>
+                                            </label>
+
+                                            {# The interfaces info link #}
+                                            <div class="col-md-3"
+                                                 style="text-align: left;padding-left: 0px;font-weight:bold;">
+                                                <i class="fa fa-list" style="color:#605ca8"></i>
+                                                <a href="#" id="interfaces_info" data-toggle="modal"
+                                                   data-target="#exampleModal"
+                                                   onclick="return load_interfaces_info()">
+                                                    <span style="color:#605ca8">&nbsp;Current Node Interfaces</span>
+                                                </a>
+                                            </div>
+
+                                            <!-- ======================================================================================= -->
+                                            <!-- Modal Of Network Interfaces Info Pop-Up -->
+                                            <!-- ======================================= -->
+
+                                            {# A hiddens to save the json of the interfaces dictionary #}
+                                            <input type="hidden" id="network_interfaces" value="{{ interfaces_json }}">
+
+                                            {# A hidden to save the list of dictionary keys #}
+                                            <input type="hidden" id="keys_ls" value="{{ keys_ls }}">
+
+
+                                            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                                                 aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                                                {% include "deploy/view_interfaces_info.html" %}
+
+                                            </div>
+                                            <!-- End Of Modal Of Network Interfaces Info Pop-Up  -->
+                                            <!-- ======================================================================================= -->
+
+                                            <br>
+
+                                            <div class="box-body">
+                                                <input type="radio"
+                                                       {% if not deploy_data['cluster_NIC_settings']['jumbo_frames'] %}
+                                                checked="checked"
+                                                {% endif %}
+                                                value="normal" name="frame_size"
+                                                id="option_normal" class="minimal">
+                                                <label style="padding-right: 15px;" for="option_normal">No</label>
+                                                <input type="radio"
+                                                       {% if deploy_data['cluster_NIC_settings']['jumbo_frames'] %}
+                                                checked="checked"
+                                                {% endif %}
+                                                value="jumbo_frames" name="frame_size"
+                                                id="option_jf"
+                                                class="minimal">
+                                                <label for="option_jf">Yes (9000 MTU)</label><br/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {# ============================================================================== #}
+
+                                    {# ----------------------------- NIC Interfaces ----------------------------- #}
+                                    <div id="jf_interfaces">
+                                        <div class="col-md-12" style="margin-left: 12px;">
+                                            <div class="form-group">
+                                                <label id="lbl_jf_interfaces" style="float: left;padding-right: 10px;">
+                                                    <i class=""></i>NIC Interfaces:<font color="red">*</font></label>
+                                                <select class="form-control" name="jf_interface[]" id="jf_interface"
+                                                        multiple="multiple"
+                                                        style="width: 15%;">
+                                                    {% for eth in eths %}
+                                                    {% if (eth.is_management != true) %}
+                                                    <option value="{{ eth.name }}" {% if eth.name in deploy_data[
+                                                    'cluster_NIC_settings']['jf_interfaces'] %}selected {% endif %}>{{
+                                                    eth.name }}</option>
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {# ------------------------------------------------------------------------------ #}
+
+
+                                    {# ============================= Use NIC Bonding ============================ #}
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>
+                                                <i class=""></i>Use NIC Bonding:<font color="red">*</font>
+                                            </label>
+
+                                            <div class="box-body">
+                                                <input type="radio"
+                                                       {% if not deploy_data['cluster_NIC_settings']['NIC_bonding'] %}
+                                                checked="checked"
+                                                {% endif %}
+                                                value="normal"
+                                                name="interface_type"
+                                                id="option_normal_type" class="minimal">
+                                                <label style="padding-right: 15px;"
+                                                       for="option_normal_type">No</label>
+                                                <input type="radio"
+                                                       {% if deploy_data['cluster_NIC_settings']['NIC_bonding'] %}
+                                                checked="checked"
+                                                {% endif %}
+                                                value="bond" name="interface_type"
+                                                id="option_bond_type"
+                                                class="minimal">
+                                                <label for="option_bond_type">Yes (Advanced)</label><br/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {# ============================================================================== #}
+
+                                    {# -------------------------------- New Bond -------------------------------- #}
+                                    <div id="new_bond">
+                                        <div class="col-md-12"
+                                             style="margin-left: 12px; width: 98%; border: 1px solid #f4f4f4;">
+
+                                            <div class="form-group">
+                                                <label><i class=""></i>New Bond</label>
+
+                                                <div class="box-body">
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label id="lbl_bond_interfaces"
+                                                                   style="float: left;padding-right: 10px;"><i
+                                                                    class=""></i>NIC Interfaces:<font
+                                                                    color="red">*</font></label>
+                                                            <select class="form-control" name="bond_interfaces"
+                                                                    id="bond_interfaces" multiple
+                                                                    style="width: 50%;">
+                                                                {% for eth in eths %}
+                                                                {% if
+                                                                deploy_data['cluster_NIC_settings']['bonded_interfaces']
+                                                                | length >0 %}
+                                                                {% if eth.name not in
+                                                                deploy_data['cluster_NIC_settings']['bonded_interfaces_list']%}
+                                                                <option value="{{ eth.name }}"
+                                                                        {% if deploy_data[
+                                                                'cluster_NIC_settings']['bonded_interfaces'] | length >0
+                                                                %}
+                                                                {% if eth.name in
+                                                                deploy_data['cluster_NIC_settings']['bonded_interfaces_list']
+                                                                %} selected {% endif %}{% endif %}>{{ eth.name
+                                                                }}</option>
+                                                                {% endif %}
+                                                                {%else%}
+                                                                <option value="{{ eth.name }}"
+                                                                        {% if deploy_data[
+                                                                'cluster_NIC_settings']['bonded_interfaces'] | length >0
+                                                                %}
+                                                                {% if eth.name in
+                                                                deploy_data['cluster_NIC_settings']['bonded_interfaces_list']
+                                                                %} selected {% endif %}{% endif %}>{{ eth.name
+                                                                }}</option>
+                                                                {% endif %}
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label id="lbl_bond_mode"
+                                                                   style="float: left;padding-right: 10px;"><i
+                                                                    class=""></i>Bond Mode:<font
+                                                                    color="red">*</font></label>
+                                                            <select class="form-control" name="bond_mode"
+                                                                    id="bond_mode"
+                                                                    style="width: 50%;">
+                                                                <option value="0">---</option>
+                                                                {% for mode in bond_modes %}
+                                                                <option value="{{ mode }}">{{ mode }}</option>
+                                                                {% endfor %}
+                                                            </select><br>
+                                                        </div>
+                                                    </div>
+                                                    <div id="bond_primary">
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label id="lbl_bond_primary"
+                                                                       style="float: left;padding-right: 10px;"><i
+                                                                        class=""></i>Primary NIC:<font
+                                                                        color="red">*</font></label>
+                                                                <select class="form-control" name="bond_primary_int"
+                                                                        id="bond_primary_int"
+                                                                        style="width: 50%;">
+                                                                    <option value="0">---</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label id="lbl_bond_name"
+                                                                   style="float: left;padding-right: 10px;"><i
+                                                                    class=""></i>Bond Name:<font
+                                                                    color="red">*</font></label>
+                                                            <input class="form-control" maxlength="50" type="text"
+                                                                   id="bond_name" autocomplete="off"
+                                                                   name="bond_name" value="" style="width: 50%;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-12" style="margin-bottom: 10px;">
+                                                <div class="form-group">
+                                                    <button type="button" id="add_bond"
+                                                            class="btn btn-primary pull-right">Add Bond
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        {# ----------------------------- Added Bonds ---------------------------- #}
+                                        <div class="col-md-12" style="margin-left: 12px; margin-top: 10px;">
+                                            <div class="form-group">
+                                                <label id="lbl_added_bond"><i class=""></i>Added Bonds</label>
+
+                                                <div class="box-body">
+                                                    <table id="bond_list"
+                                                           class="table table-bordered table-striped table-align-mid ">
+                                                        <thead>
+                                                        <tr>
+                                                            <th>Name</th>
+                                                            <th>Mode</th>
+                                                            <th>Interfaces</th>
+                                                            <th>Primary Interface</th>
+                                                            <th>Frame Size</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                        </thead>
+                                                        {% if deploy_data['cluster_NIC_settings']['bonded_interfaces'] |
+                                                        length > 0 %}
+                                                        {% for bonded_interface in
+                                                        deploy_data['cluster_NIC_settings']['bonded_interfaces']%}
+                                                        <tr>
+                                                            <td>{{bonded_interface['name']}}</td>
+                                                            <td>{{bonded_interface['mode']}}</td>
+                                                            <td>{{bonded_interface['interfaces']}}</td>
+                                                            <td>{{bonded_interface['primary_interface']}}</td>
+                                                            <td>{% if bonded_interface['is_jumbo_frames']
+                                                                %}Jumbo{%else%}Normal{%endif%}
+                                                            </td>
+                                                            <td>
+                                                                <div title='Remove' class='btn-group'>
+                                                                    <button id='delete_btn'
+                                                                            onclick='remove_bond($(this))'
+                                                                            class='btn btn-default'><i
+                                                                            class='fa fa-remove'></i></button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                        {% endif %}
+
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {# -------------------------------------------------------------------------- #}
+
+                                    </div>
+                                    {# ------------------------------------------------------------------------------ #}
+
+
+                                </div>
+                                <div class="box-footer">
+                                    <input type="hidden" id="validate">
+                                    <input type="hidden" id="bonded_NIC" name="bonded_NIC">
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_info') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+        {# ========================================================================================================= #}
+
+
+    </div>
+</section>
+{% endblock %}
+
+
+{% block js%}
+<script src="/static/dist/js/pages/cluster/cluster_interface_setting.js?v=7777777"></script>
+
+
+<script>
+    function change_action(url) {
+        $('#validate').val('false');
+        $('#cluster_interface_setting').attr("action", url);
+        $("#cluster_interface_setting").submit();
+    }
+    var messages = {}
+    messages.save_cluster_interface_setting_lbl_bond_interfaces_empty = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_bond_interfaces_empty") }}';
+    messages.save_cluster_interface_setting_lbl_bond_mode_empty = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_bond_mode_empty") }}';
+    messages.save_cluster_interface_setting_lbl_bond_name_empty = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_bond_name_empty") }}';
+    messages.save_cluster_interface_setting_lbl_bond_name_used = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_bond_name_used") }}';
+    messages.save_cluster_interface_setting_lbl_bond_primary_empty = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_bond_primary_empty") }}';
+    messages.save_cluster_interface_setting_lbl_bond_interfaces_invalid = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_bond_interfaces_invalid") }}';
+    messages.save_cluster_interface_setting_lbl_added_bonds_invalid = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_added_bond_err") }}';
+    messages.save_cluster_interface_setting_lbl_jf_interfaces_empty = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_jf_interfaces_empty") }}';
+    messages.save_cluster_interface_setting_lbl_bond_empty = '{{ gettext("ui_deploy_save_cluster_interface_setting_lbl_bond_empty") }}'
+</script>
+
+{% endblock %}

@@ -1,0 +1,16 @@
+diff -upr -x '*.[^ch]' a/drivers/target/target_core_rbd.c b/drivers/target/target_core_rbd.c
+--- a/drivers/target/target_core_rbd.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/target/target_core_rbd.c	2018-07-19 09:37:18.572000311 +0200
+@@ -1882,7 +1882,11 @@ tcm_rbd_execute_pr_register_existing(str
+ 			goto out;
+ 		}
+ 	} else {
+-		/* update key */
++		if( pr_info->rsv && pr_info->rsv->key == existing_reg->key ) {
++			/* update reservation key */
++			pr_info->rsv->key = new_key;
++		}
++		/* update registration key */
+ 		existing_reg->key = new_key;
+ 	}
+ 

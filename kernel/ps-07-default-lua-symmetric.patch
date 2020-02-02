@@ -1,0 +1,17 @@
+diff -upr -x '*.[^ch]' a/drivers/target/target_core_alua.c b/drivers/target/target_core_alua.c
+--- a/drivers/target/target_core_alua.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/target/target_core_alua.c	2018-07-19 09:46:49.900018436 +0200
+@@ -1662,10 +1662,10 @@ struct t10_alua_tg_pt_gp *core_alua_allo
+ 	tg_pt_gp->tg_pt_gp_alua_access_state =
+ 			ALUA_ACCESS_STATE_ACTIVE_OPTIMIZED;
+ 	/*
+-	 * Enable both explicit and implicit ALUA support by default
++	 * Default to symmetric LUA using ALUA semantics: implicit-only TPGs in A/O
+ 	 */
+-	tg_pt_gp->tg_pt_gp_alua_access_type =
+-			TPGS_EXPLICIT_ALUA | TPGS_IMPLICIT_ALUA;
++	tg_pt_gp->tg_pt_gp_alua_access_type = TPGS_IMPLICIT_ALUA;
++
+ 	/*
+ 	 * Set the default Active/NonOptimized Delay in milliseconds
+ 	 */

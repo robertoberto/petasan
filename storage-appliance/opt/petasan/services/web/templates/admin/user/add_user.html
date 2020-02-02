@@ -1,0 +1,145 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+
+{% endblock %}
+
+{% block title %}<title>Add User</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-user"></i> Manage User</li>
+    <li><i class="fa fa-users"></i><a href="/user/list">&nbsp;User List</a></li>
+    <li><i class="fa fa-user-plus"></i> Add User</li>
+</ol>
+{% endblock %}
+{% block content_header %}Add User{% endblock %}
+{% block content %}
+<section class="content">
+    <form id="add_user_form" method="post" action="{{ url_for('user_controller.save_user') }}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box  box-default">
+                    <div class="box-body">
+                        <!-- message area -->
+                        {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+                            <div class="col-md-6">
+                                <!-- name -->
+                                <div class="form-group">
+                                    <label id="lblName"><i class=""></i>Name:<font color="red">*</font></label>
+                                    <input class="form-control" maxlength="50" type="text"
+                                           id="name" autocomplete="off"
+                                           name="name" value="{{ form.name }}">
+                                </div>
+
+                                <div class="form-group">
+                                    <label id="lblUserName"><i class=""></i>Username:<font color="red">*</font></label>
+                                    <input class="form-control" maxlength="50" type="text"
+                                           id="userName" autocomplete="off"
+                                           name="userName" value="{{ form.UserName }}">
+                                </div>
+                        </div>
+                        <!-- password -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label id="lblPassword"><i class=""></i>Password:<font color="red">*</font></label>
+                                    <input class="form-control" maxlength="50" type="password"
+                                           id="userPassword" autocomplete="off"
+                                           name="userPassword" value="{{ form.Password }}">
+                                </div>
+                                <!-- confirm password -->
+                                <div class="form-group">
+                                    <label id="lblConfirmPassword"><i class=""></i>Confirm Password:<font
+                                            color="red">*</font></label>
+                                    <input class="form-control" maxlength="50" type="password"
+                                           id="confirmPassword" autocomplete="off"
+                                           name="confirmPassword" value="{{ form.Password }}">
+                                </div>
+                            </div>
+
+
+                        <!-- Email Address -->
+                        <!-- Role -->
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label id="lblRole"><i class=""></i> Role:</label>
+                                    <select class="form-control" name="role" id="role">
+                                        {% for r in roles %}
+                                        <option value="{{ r.id }}">{{ r.name }}</option>
+                                        {% endfor %}
+
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="col-md-6" style="padding-left: 0px;">
+                                        <label id="lblEmail"><i class=""></i>Email:<font color="red"></font></label>
+                                        <input class="form-control" maxlength="50" type="text"
+                                               id="email" autocomplete="off"
+                                               name="email" value="{{ form.email }}">
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <input style="position: absolute; margin-top: 15px;" class="icheckbox_minimal-blue"
+                                           type="checkbox" name="notify_mail" id="notify_mail" value="Notify">
+                                    <label style="padding-left:20px; margin-top: 15px;" for="notify_mail"> Receive
+                                        Notifications </label><br>
+                                </div>
+                            </div>
+                        <div class="box-footer">
+                            <button type="submit" class="btn btn-primary pull-right" value="submit">Save</button>
+                            <button type="button" style="margin-right: 10px" class="btn btn-default pull-right"
+                                    id="cancelBtn" value="cancel">Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{ macros.nav('Manage User','Add User') }}
+{% endblock %}
+
+
+{% block js %}
+<script src="../../../static/dist/js/pages/user/add.js?v=7777777"></script>
+<script>
+    var url = "{{ url_for('user_controller.user_list') }}";
+    user_add_cancel(url);
+    var messages = new Object()
+    messages.label_name = '{{ gettext("ui_admin_add_user_label_valid_name") }}';
+    messages.user_name_special_character = '{{ gettext("ui_admin_add_user_label_user_name_not_special_characters") }}';
+    messages.user_name = '{{ gettext("ui_admin_add_user_label_valid_user_name") }}';
+    messages.user_password = '{{ gettext("ui_admin_add_user_label_valid_password") }}';
+    messages.confirm_password = '{{ gettext("ui_admin_add_user_label_confirm_password") }}';
+    messages.confirm_email = '{{ gettext("ui_admin_add_user_label_confirm_email") }}';
+    messages.valid_email= '{{gettext("ui_admin_add_user_label_valid_email")}}'
+</script>
+
+
+{% endblock %}

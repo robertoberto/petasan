@@ -1,0 +1,9 @@
+[Unit]
+Description= PetaSAN Start All OSDs service
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/scripts/util/start_all_osds.py
+Restart=no
+RemainAfterExit=yes
+

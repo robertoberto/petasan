@@ -1,0 +1,74 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+{% endblock %}
+
+{% block title%}<title>Node Log</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-bars"></i> Manage Nodes</li>
+     <li><i class="fa fa-object-group"></i> <a href="{{ url_for('node_controller.node_list') }}"> Nodes List</a> </li>
+    <li><i class="fa fa-list"></i> Show Log</li>
+</ol>
+{% endblock %}
+{% block content_header%}Node {{node_name}} Log{% endblock %}
+{% block content %}
+
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box  box-default">
+                <div class="box-body">
+                    <!-- message area -->
+                    {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                    <!--/ message area -->
+                    <div style="padding-right: 10px;">
+                        <form action="{{ url_for('node_controller.refresh_show_log', node_name=node_name) }}"
+                              method="get">
+                            <button type="submit" title="Refresh" style="float: right;" class="btn btn-default">
+                                <i class="fa fa-repeat"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div style="overflow-y: scroll; height:550px; width: 100%">
+                        {% set counter = 0 %}
+                        {% for log in logs %}
+                            {% set counter = counter + 1 %}
+                            {% if log != "" %}
+                                {% if counter % 2 != 0 %}
+                                <div class="row" style=" height: auto;"><p style="padding-left:20px;vertical-align: middle;padding-top: 5px">{{ log }}</p></div>
+                                {% else %}
+                                <div class="row" style="background-color: #f9f9f9; height: auto;"><p style="padding-left:20px;vertical-align: middle;padding-top: 5px">{{ log }}</p></div>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Manage Node','Show Log')}}
+{% endblock %}
+
+{% block js%}
+<script>
+</script>
+{% endblock %}

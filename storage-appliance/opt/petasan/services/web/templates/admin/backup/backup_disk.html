@@ -1,0 +1,110 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title%}<title>Backup Disks</title>{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb">
+    <li><i class="fa fa-archive"></i> Backup Disks</li>
+</ol>
+{% endblock %}
+
+
+{% block content_header%} Backup Disks{% endblock %}
+{% block content %}
+
+
+<section class="content">
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                    <br>
+
+                    <div>
+                        <form>
+                            <input type="text" name="disks" id="disks" value="">
+
+                            <!-- load page in modal -->
+
+                            <a id="backupInfo" href="#" data-toggle="modal" data-target="#backupModal"
+                               data-controls-modal="modal-from-dom" data-backdrop="static"
+                                onclick="return load_disks('{{ url_for('backup_controller.get_disks_list') }}')"
+                               data-keyboard="true" class="btn">View Disks</a>
+
+                        </form>
+                        <form>
+                        <a id="schedule_link" href="#" data-toggle="modal" data-target="#schedule"
+                               data-controls-modal="modal-from-dom" data-backdrop="static"
+                                onclick="schedule_types(['daily' , 'weekly' , 'monthly'])"
+                               data-keyboard="true" class="btn">Schedule</a>
+                        </form>
+                    </div>
+
+                    <!-- ======================================================================================= -->
+                    <!-- New --><!-- Modal Pop-Up -->
+                    <!-- ===================================== -->
+                    <div class="modal fade" id="backupModal" tabindex="-1" role="dialog"
+                         aria-labelledby="backupModal" aria-hidden="true">
+
+                        {% include "admin/backup/disks_list.html" %}
+                    </div>
+
+                    <div class="modal fade" id="schedule" tabindex="-1" role="dialog"
+                         aria-labelledby="schedule" aria-hidden="true">
+
+                        {% include "admin/schedule/view_schedule.html" %}
+                    </div>
+                    <!-- ======================================================================================= -->
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('ScheduleJobs','BackupDisk')}}
+<!--    -->
+{% endblock %}
+
+{% block js%}
+
+<script src="/static/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+<script src="/static/dist/js/pages/backup/backup.js?v=7777777"></script>
+
+<script src="/static/dist/js/pages/schedule/schedule.js?v=7777777"></script>
+
+
+{% endblock %}

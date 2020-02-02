@@ -1,0 +1,359 @@
+diff -upNr -x '*.[^ch]' a/drivers/block/rbd.c b/drivers/block/rbd.c
+--- a/drivers/block/rbd.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/block/rbd.c	2018-07-19 09:05:28.679939723 +0200
+@@ -34,6 +34,7 @@
+ #include <linux/ceph/cls_lock_client.h>
+ #include <linux/ceph/decode.h>
+ #include <linux/ceph/librbd.h>
++#include <linux/ceph/striper.h>
+ #include <linux/parser.h>
+ #include <linux/bsearch.h>
+ 
+@@ -1115,27 +1116,6 @@ static void rbd_dev_mapping_clear(struct
+ 	rbd_dev->mapping.features = 0;
+ }
+ 
+-static u64 rbd_segment_offset(struct rbd_device *rbd_dev, u64 offset)
+-{
+-	u64 segment_size = rbd_obj_bytes(&rbd_dev->header);
+-
+-	return offset & (segment_size - 1);
+-}
+-
+-static u64 rbd_segment_length(struct rbd_device *rbd_dev,
+-				u64 offset, u64 length)
+-{
+-	u64 segment_size = rbd_obj_bytes(&rbd_dev->header);
+-
+-	offset &= segment_size - 1;
+-
+-	rbd_assert(length <= U64_MAX - offset);
+-	if (offset + length > segment_size)
+-		length = segment_size - offset;
+-
+-	return length;
+-}
+-
+ /*
+  * bio helpers
+  */
+@@ -2501,9 +2481,15 @@ int rbd_img_request_fill(struct rbd_img_
+ 
+ 	while (resid) {
+ 		struct ceph_osd_request *osd_req;
+-		u64 object_no = img_offset >> rbd_dev->header.obj_order;
+-		u64 offset = rbd_segment_offset(rbd_dev, img_offset);
+-		u64 length = rbd_segment_length(rbd_dev, img_offset, resid);
++		u64 object_no;
++		u64 offset;
++		u64 length;
++		struct stripe_extent ext;
++
++		get_stripe_extent(&rbd_dev->layout,img_offset,resid,&ext);
++		object_no = ext.objectno;
++		offset = ext.offset;
++		length = ext.length;
+ 
+ 		obj_request = rbd_obj_request_create(type);
+ 		if (!obj_request)
+@@ -2602,18 +2588,20 @@ int rbd_img_cmp_and_write_request_fill(s
+ 	int num_ops = 0;
+ 	u64 img_offset;
+ 	u64 offset;
++	struct stripe_extent ext;
+ 
+ 	img_offset = img_request->offset;
+-	offset = rbd_segment_offset(rbd_dev, img_offset);
++	get_stripe_extent(&rbd_dev->layout,img_offset,cmp_length,&ext);
++	offset = ext.offset;
+ 
+ 	/*
+ 	 * LIO currently only supports 1 sector reqs and we assume the req
+ 	 * will not span segments.
+ 	 */
+-	if (rbd_segment_length(rbd_dev, offset, cmp_length) != cmp_length)
++	if ( ext.length != cmp_length)
+ 		return -EOPNOTSUPP;
+ 
+-	object_no = img_offset >> rbd_dev->header.obj_order;
++	object_no = ext.objectno;
+ 
+ 	obj_request = rbd_obj_request_create(OBJ_REQUEST_SG);
+ 	if (!obj_request)
+@@ -2789,7 +2777,6 @@ out_err:
+  * object request from the image request does not exist.
+  *
+  * A page array big enough to hold the returned data is allocated
+- * and supplied to rbd_img_request_fill() as the "data descriptor."
+  * When the read completes, this page array will be transferred to
+  * the original object request for the copyup operation.
+  *
+@@ -2806,24 +2793,47 @@ static int rbd_img_obj_parent_read_full(
+ 	u32 page_count;
+ 	int result;
+ 
+-	rbd_assert(rbd_dev->parent != NULL);
++	struct rbd_obj_request *parent_obj_request = NULL;
++	struct ceph_osd_request *osd_req;
+ 
+-	/*
+-	 * Determine the byte range covered by the object in the
+-	 * child image to which the original request was to be sent.
+-	 */
+-	img_offset = obj_request->img_offset - obj_request->offset;
+-	length = rbd_obj_bytes(&rbd_dev->header);
++	rbd_assert(rbd_dev->parent != NULL);
++	if (rbd_dev->header.stripe_count != 
++	    rbd_dev->parent->header.stripe_count ||	
++	    rbd_dev->header.stripe_unit != 
++	    rbd_dev->parent->header.stripe_unit) {
++		rbd_warn(rbd_dev,"Cannot perform parent full object read due "
++			 "to stripe mis-match\n");
++		result = -EINVAL;
++		goto out_err;
++	}
+ 
+ 	/*
+ 	 * There is no defined parent data beyond the parent
+ 	 * overlap, so limit what we read at that boundary if
+ 	 * necessary.
+ 	 */
+-	if (img_offset + length > rbd_dev->parent_overlap) {
+-		rbd_assert(img_offset < rbd_dev->parent_overlap);
+-		length = rbd_dev->parent_overlap - img_offset;
++
++	img_offset = get_object_start_offset(&rbd_dev->layout,
++					     obj_request->object_no);
++	rbd_assert(img_offset < rbd_dev->parent_overlap);
++	if (rbd_dev->parent_overlap < get_object_end_offset(&rbd_dev->layout,
++						obj_request->object_no)) {
++		u64 diff = rbd_dev->parent_overlap - img_offset;
++		u64 stripe_row_size = rbd_dev->header.stripe_unit * 
++			rbd_dev->header.stripe_count;
++		u64 rows = diff / stripe_row_size;
++		u64 remain = diff - rows * stripe_row_size;
++		length = rows * rbd_dev->header.stripe_unit;
++		if (rbd_dev->header.stripe_unit < remain)
++			length = length + rbd_dev->header.stripe_unit;
++		else
++			length = length + remain;
++	} 
++	else {
++		/* copy entire parent object */
++		length = rbd_obj_bytes(&rbd_dev->header);
+ 	}
++	
+ 
+ 	/*
+ 	 * Allocate a page array big enough to receive the data read
+@@ -2843,9 +2853,27 @@ static int rbd_img_obj_parent_read_full(
+ 	if (!parent_request)
+ 		goto out_err;
+ 
+-	result = rbd_img_request_fill(parent_request, OBJ_REQUEST_PAGES, pages);
+-	if (result)
++	parent_obj_request = rbd_obj_request_create(OBJ_REQUEST_PAGES);
++	if (!obj_request) {
++		rbd_img_obj_request_del(parent_request, parent_obj_request);
++ 		goto out_err;
++	}
++	rbd_img_obj_request_add(parent_request, parent_obj_request);
++	parent_obj_request->object_no = obj_request->object_no;
++	parent_obj_request->offset = 0;
++	parent_obj_request->length = length;
++	parent_obj_request->pages = pages;
++	page_count = (u32)calc_pages_for(0, length);
++	parent_obj_request->page_count = page_count; 
++	osd_req = rbd_osd_req_create(rbd_dev,OBJ_OP_READ,1,parent_obj_request);
++	if (!osd_req) {
++		rbd_img_obj_request_del(parent_request, parent_obj_request);
+ 		goto out_err;
++	}
++	parent_obj_request->osd_req = osd_req;
++	parent_obj_request->callback = rbd_img_obj_callback; 
++	parent_obj_request->img_offset = img_offset;
++	rbd_img_obj_request_fill(parent_obj_request, osd_req, OBJ_OP_READ, 0);
+ 
+ 	parent_request->copyup_pages = pages;
+ 	parent_request->copyup_page_count = page_count;
+@@ -5676,28 +5704,10 @@ static int rbd_dev_v2_striping_info(stru
+ 	if (ret < size)
+ 		return -ERANGE;
+ 
+-	/*
+-	 * We don't actually support the "fancy striping" feature
+-	 * (STRIPINGV2) yet, but if the striping sizes are the
+-	 * defaults the behavior is the same as before.  So find
+-	 * out, and only fail if the image has non-default values.
+-	 */
+-	ret = -EINVAL;
+ 	obj_size = rbd_obj_bytes(&rbd_dev->header);
+ 	p = &striping_info_buf;
+ 	stripe_unit = ceph_decode_64(&p);
+-	if (stripe_unit != obj_size) {
+-		rbd_warn(rbd_dev, "unsupported stripe unit "
+-				"(got %llu want %llu)",
+-				stripe_unit, obj_size);
+-		return -EINVAL;
+-	}
+ 	stripe_count = ceph_decode_64(&p);
+-	if (stripe_count != 1) {
+-		rbd_warn(rbd_dev, "unsupported stripe count "
+-				"(got %llu want 1)", stripe_count);
+-		return -EINVAL;
+-	}
+ 	rbd_dev->header.stripe_unit = stripe_unit;
+ 	rbd_dev->header.stripe_count = stripe_count;
+ 
+@@ -6677,6 +6687,18 @@ static int rbd_dev_image_probe(struct rb
+ 	if (ret)
+ 		goto err_out_probe;
+ 
++	if (rbd_dev->parent != NULL) {
++		if (rbd_dev->header.stripe_count != 
++		    rbd_dev->parent->header.stripe_count || 
++		    rbd_dev->header.stripe_unit != 
++		    rbd_dev->parent->header.stripe_unit) {
++			rbd_warn(rbd_dev,"Cannot map child image with "
++				 "different striping than parent");
++			ret = -EINVAL;
++			goto err_out_probe;
++		}
++	}
++
+ 	dout("discovered format %u image, header name is %s\n",
+ 		rbd_dev->image_format, rbd_dev->header_oid.name);
+ 	return 0;
+diff -upNr -x '*.[^ch]' a/include/linux/ceph/striper.h b/include/linux/ceph/striper.h
+--- a/include/linux/ceph/striper.h	1970-01-01 02:00:00.000000000 +0200
++++ b/include/linux/ceph/striper.h	2018-07-19 01:05:28.000000000 +0200
+@@ -0,0 +1,34 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _FS_CEPH_STRIPER_H
++#define _FS_CEPH_STRIPER_H
++
++#include <linux/ceph/ceph_fs.h>
++
++struct ceph_file_layout;
++
++struct stripe_extent {
++	u64	objectno;
++	u64	offset;
++	u64	length;
++};
++
++/* Logical to Object address mapping */
++void get_stripe_extent(struct ceph_file_layout *layout,u64 offset,
++			u64 len,struct stripe_extent *ext);
++
++/* Object to Logical address mapping */
++u64 get_file_offset(struct ceph_file_layout *layout,u64 objectno,u64 off);
++
++static inline u64 get_object_start_offset(struct ceph_file_layout *layout,
++					   u64 objectno)
++{
++	return get_file_offset(layout,objectno,0);
++}
++
++static inline u64 get_object_end_offset(struct ceph_file_layout *layout,
++					 u64 objectno)
++{
++	return get_file_offset(layout,objectno,layout->object_size);
++}
++
++#endif
+diff -upNr -x '*.[^ch]' a/net/ceph/Makefile b/net/ceph/Makefile
+--- a/net/ceph/Makefile	2018-05-29 23:04:44.000000000 +0200
++++ b/net/ceph/Makefile	2018-07-19 09:05:28.679939723 +0200
+@@ -12,5 +12,5 @@ libceph-y := ceph_common.o messenger.o m
+ 	crypto.o armor.o \
+ 	auth_x.o \
+ 	ceph_fs.o ceph_strings.o ceph_hash.o \
+-	pagevec.o snapshot.o string_table.o
++	pagevec.o snapshot.o string_table.o striper.o
+ 
+diff -upNr -x '*.[^ch]' a/net/ceph/striper.c b/net/ceph/striper.c
+--- a/net/ceph/striper.c	1970-01-01 02:00:00.000000000 +0200
++++ b/net/ceph/striper.c	2018-07-19 01:05:28.000000000 +0200
+@@ -0,0 +1,81 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#include <linux/ceph/messenger.h>
++#include <linux/ceph/striper.h>
++
++/*
++ * Address mappings for striped objects
++ * Based on user space osdc/Striper.cc
++ */
++
++/* Logical to Object address, based on osdc/Striper.cc file_to_extents() */
++void get_stripe_extent(struct ceph_file_layout *layout,u64 offset,
++			u64 len,struct stripe_extent *ext)
++{
++	u64 object_size;
++	u64 su;
++	u64 stripe_count;
++	u64 stripes_per_object;
++	u64 blockno;
++	u64 stripeno;
++	u64 stripepos;
++	u64 objectsetno;
++	u64 objectno;
++	u64 block_start;
++	u64 block_off;
++	u64 max;
++
++	object_size = layout->object_size;
++	su = layout->stripe_unit;
++	stripe_count = layout->stripe_count;
++	stripes_per_object = object_size / su;
++
++	blockno = offset / su; /* which block */
++	stripeno = blockno / stripe_count; /* which horizontal stripe Y */
++	stripepos = blockno % stripe_count; /* which object in object set X */
++	objectsetno = stripeno / stripes_per_object; /* which object set */
++	objectno = objectsetno * stripe_count + stripepos;  /* object id */
++
++	// map range into object
++	block_start = (stripeno % stripes_per_object) * su;
++	block_off = offset % su;
++	max = su - block_off;
++
++	ext->objectno = objectno;
++	ext->offset = block_start + block_off;
++	if (len > max)
++		ext->length = max;
++	else
++		ext->length = len;
++}
++EXPORT_SYMBOL(get_stripe_extent);
++
++/* Object to Logical address, based on osdc/Striper.cc extent_to_file() */
++u64 get_file_offset(struct ceph_file_layout *layout,u64 objectno,u64 off)
++{
++	u64 object_size;
++	u64 su;
++	u64 stripe_count;
++	u64 stripes_per_object;
++	u64 stripepos;
++	u64 objectsetno;
++	u64 stripeno;
++	u64 blockno;
++	u64 off_in_block;
++	u64 file_offset;
++
++	object_size = layout->object_size;
++	su = layout->stripe_unit;
++	stripe_count = layout->stripe_count;
++	stripes_per_object = object_size / su;
++	off_in_block = off % su;
++
++	stripepos = objectno % stripe_count;
++	objectsetno = objectno / stripe_count;
++	stripeno = off / su + objectsetno * stripes_per_object;
++	blockno = stripeno * stripe_count + stripepos;
++	file_offset = blockno * su + off_in_block;
++
++	return file_offset;
++}
++EXPORT_SYMBOL(get_file_offset);

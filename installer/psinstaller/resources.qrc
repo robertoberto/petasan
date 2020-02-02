@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>resources/disk1.png</file>
+        <file>resources/disk2.png</file>
+        <file>resources/refresh.png</file>
+        <file>resources/done-48.png</file>
+        <file>resources/done-64.png</file>
+        <file>resources/if1.png</file>
+        <file>resources/if2.png</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>resources/psinstaller.png</file>
+        <file>resources/b1.png</file>
+        <file>resources/b2.png</file>
+        <file>resources/b3.png</file>
+        <file>resources/b4.png</file>
+        <file>resources/b5.png</file>
+        <file>resources/b6.png</file>
+        <file>resources/splash.png</file>
+    </qresource>
+</RCC>

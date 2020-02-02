@@ -1,0 +1,242 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title %}<title>Physical Disk List</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-bars"></i> Manage Nodes</li>
+    <li><i class="fa fa-object-group"></i> <a href="{{ url_for('node_controller.node_list') }}"> Nodes List</a></li>
+    <li><i class="fa fa-database"></i> Physical Disk List</li>
+</ol>
+{% endblock %}
+{% block content_header %}{{ nodeName }} Physical Disk List{% endblock %}
+{% block content %}
+<section class="content">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-body">
+                    {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+
+                    <table id="diskList" class="table table-bordered table-striped table-align-mid ">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Size</th>
+                            <!--<th>Type</th>-->
+                            <th>SSD</th>
+                            <!--<th>Vendor</th>-->
+                            <!--<th>Model</th>-->
+                            <th>Serial</th>
+                            <th>SMART Test</th>
+                            <th>Usage</th>
+                            <th>Status</th>
+                            <th>Linked Devices</th>
+                            <th style="width: 12%">Action</th>
+
+                        </tr>
+                        </thead>
+                        <tbody id="diskBody">
+                        </tbody>
+                    </table>
+
+                    <!-- ------------------------------------------------------------------------------------------- -->
+<!--                    &lt;!&ndash; Modal &ndash;&gt;-->
+<!--                    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">-->
+<!--                        <div class="modal-dialog" role="document">-->
+<!--                            <div class="modal-content">-->
+<!--                                <div class="modal-header">-->
+<!--                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span-->
+<!--                                            aria-hidden="true">&times;</span></button>-->
+<!--                                    <h4 class="modal-title" id="myModalLabel">Add OSD</h4>-->
+<!--                                </div>-->
+
+<!--                                <div class="modal-body">-->
+<!--                                    <form action="{{ url_for('node_controller.add_osd_with_journal', node_name=nodeName, disk_name='') }}"-->
+<!--                                          method="post" id="osd_form">-->
+<!--                                        &lt;!&ndash; Use Journal &ndash;&gt;-->
+<!--                                        <div class="form-group">-->
+<!--                                            <label>Use Journal (WAL+DB)</label>-->
+
+<!--                                            <div class="form-group">-->
+<!--                                                <div class="row">-->
+<!--                                                    <div class="col-md-0.5"></div>-->
+<!--                                                    <div class="col-md-3">-->
+<!--                                                        <div class="radio">-->
+<!--                                                            <label>-->
+<!--                                                                <input name="use_journal" value="yes" type="radio"-->
+<!--                                                                       checked="checked"-->
+<!--                                                                       onchange="show_journal_option()"/>-->
+<!--                                                                Yes-->
+<!--                                                            </label>-->
+<!--                                                        </div>-->
+<!--                                                    </div>-->
+
+<!--                                                    <div class="col-md-3">-->
+<!--                                                        <div class="radio">-->
+<!--                                                            <label>-->
+<!--                                                                <input name="use_journal" value="no" type="radio"-->
+<!--                                                                       onchange="hide_journal_option()"/>-->
+<!--                                                                No-->
+<!--                                                            </label>-->
+<!--                                                        </div>-->
+<!--                                                    </div>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+
+<!--                                        &lt;!&ndash; Journal Disk &ndash;&gt;-->
+<!--                                        <div class="form-group">-->
+<!--                                            <label id="lbl_journal_disk">Journal Disk </label>-->
+<!--                                            <select class="form-control" name="journal_disk" id="journal_disk">-->
+<!--                                                <option value="auto" selected="selected">Auto</option>-->
+<!--                                            </select>-->
+<!--                                        </div>-->
+<!--                                        &lt;!&ndash; Disk name  &ndash;&gt;-->
+<!--                                        <div class="form-group">-->
+<!--                                            <input name="disk_name" value="" type="hidden" id="disk_name">-->
+<!--                                        </div>-->
+<!--                                        &lt;!&ndash; Footer &ndash;&gt;-->
+<!--                                        <div class="modal-footer">-->
+<!--                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close-->
+<!--                                            </button>-->
+<!--                                            <button type="submit" class="btn btn-primary pull-right"-->
+<!--                                                    onclick="return doAddOsdJournal();">Add-->
+
+<!--                                            </button>-->
+<!--                                        </div>-->
+<!--                                    </form>-->
+<!--                                </div>-->
+
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    &lt;!&ndash; End Modal &ndash;&gt;-->
+                    <!-- ------------------------------------------------------------------------------------------- -->
+
+                    <div id="img" style="display: none; align-content: center; text-align: center;">
+                        <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+                        <p id="loading" name='loading' class="text-muted">
+                            <h3 class="box-title"></h3>
+                        </p>
+                    </div>
+
+                    <div class="dataTables_info" id="diskList_info" role="status" aria-live="polite">
+                        <span id="size"></span>
+                    </div>
+
+
+                    <!-- ------------------------------------------------------------------------------------------- -->
+                    <!-- View Details Modal -->
+                    <div class="modal fade" id="viewDiskDetails" tabindex="-1" role="dialog"
+                         aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                        {% include "admin/node/view_disk_details.html" %}
+
+                    </div>
+                    <!-- End of View Details Modal -->
+                    <!-- ------------------------------------------------------------------------------------------- -->
+
+                    <!-- ------------------------------------------------------------------------------------------- -->
+                    <!-- Modal of Adding Storage Device -->
+                    <!-- ============================== -->
+                    <div class="modal fade" id="addStorageDeviceModal" tabindex="-1"
+                         role="dialog" aria-labelledby="addStorageDeviceModalLabel" aria-hidden="true">
+
+                        {% include "admin/node/add_storage_device.html" %}
+
+                    </div>
+                    <!-- ------------------------------------------------------------------------------------------- -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <input type="hidden" id="messages"
+           value="{{ gettext('ui_node_add_osd_confirm_mesg') }}#{{gettext('ui_node_delete_osd_confirm_mesg') }}">
+    <input type="hidden" id="node_storage_role_message" value="{{ gettext('ui_node_storage_role_false') }}">
+    <input type="hidden" id="journal_mesg"
+           value="{{ gettext('ui_node_add_journal_confirm_mesg') }}#{{gettext('ui_node_delete_journal_confirm_mesg') }}">
+    <input type="hidden" id="node_manage_osd_warning_message"
+           value="{{ gettext('ui_node_manage_osd_warning_message') }}">
+
+    <!-- ===================================== -->
+    <input type="hidden" id="journalDiskListLengthErr"
+           value="{{ gettext('ui_node_add_device_journal_disk_list_len_err') }}">
+    <input type="hidden" id="cacheDiskListLengthErr"
+           value="{{ gettext('ui_node_add_device_cache_disk_list_len_err') }}">
+    <!-- ===================================== -->
+
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Manage Node','Local Disk List')}}
+{% endblock %}
+
+
+{% block js %}
+<script src="/static/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/dist/js/pages/node/disk_list.js?v=7777777"></script>
+<script>
+    var number_of_clickable_cols = 8;
+    var data_table = $("#diskList").DataTable({
+        "bPaginate": false,
+        "columnDefs": [
+            {"orderable": false, "targets": [8]}
+        ]
+    });
+
+    bindTable();
+    $("#diskList_info").hide();
+
+    var isProcessing = false;
+    var node_name = '{{ nodeName }}';
+    var process_id = '{{ processID }}';
+    var node_storage_role = '{{ node_storage_role }}';
+    var url_add_action = "{{ url_for('node_controller.add_osd', node_name=nodeName, disk_name='') }}";
+    var url_add_journal_action = "{{ url_for('node_controller.add_journal', node_name=nodeName, disk_name='') }}";
+    var url_add_with_journal_action = "{{ url_for('node_controller.add_osd_with_journal', node_name=nodeName, disk_name='') }}";
+    var url_delete_action = "{{ url_for('node_controller.delete_osd', node_name=nodeName, disk_name='', osd_id='') }}";
+    var url_delete_journal_action = "{{ url_for('node_controller.delete_journal', node_name=nodeName, disk_name='') }}";
+    var loginUrl = "{{ url_for('main_controller.login') }}";
+
+    // ===================================== //
+    var url_add_cache_action = "{{ url_for('node_controller.add_cache', node_name=nodeName, disk_name='') }}";
+    var url_delete_cache_action = "{{ url_for('node_controller.delete_cache', node_name=nodeName, disk_name='') }}";
+    var url_add_with_cache_action = "{{ url_for('node_controller.add_osd_with_cache', node_name=nodeName , disk_name='') }}";
+    var url_add_with_journal_cache_action = "{{ url_for('node_controller.add_osd_with_journal_cache', node_name=nodeName , disk_name='') }}";
+    // ===================================== //
+
+    var cache_messages = {};
+    cache_messages.add_cache_confirm_mesg = '{{ gettext("ui_node_add_cache_confirm_mesg") }}';
+    cache_messages.delete_cache_confirm_mesg = '{{ gettext("ui_node_delete_cache_confirm_mesg") }}';
+    var running_job = '{{gettext("ui_node_running_job_mesg")}}'
+
+</script>
+
+{% endblock %}

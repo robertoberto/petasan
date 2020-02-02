@@ -1,0 +1,83 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+<!-- Modal -->
+
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+
+        <!-- Modal Header -->
+        <!-- ============ -->
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true"> X </span>
+            </button>
+            <h4 class="modal-title">Current Node Interfaces</h4>
+        </div>
+
+        <!--  Modal Body  -->
+        <!-- ============ -->
+        <div class="modal-body">
+            <div class="box-body">
+
+                <!--  The div of the "loading.gif" image  -->
+                <div id="img" style="display: block; align-content: center; text-align: center;">
+
+                    <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+                    <p id="loading" name='loading' class="text-muted">
+                        <h3 class="box-title">Loading</h3>
+                    </p>
+
+                </div>
+
+                <!-- Data displayed in the pop-up window -->
+                <!-- *********************************** -->
+                <div id="interfacesInfoArea" style="display: none">
+                    <table id="interfacesTable" class="table table-bordered table-striped">
+
+                        <!-- table header -->
+                        <!-- ------------ -->
+                        <thead id="interfacesTableHeader">
+                            <tr>
+                                <th>Name</th>
+                                <th>Mac Address</th>
+                                <th>PCI</th>
+                                <th>Model</th>
+                            </tr>
+                        </thead>
+
+                        <!-- ----------------------------------------------------------------------------------- -->
+
+                        <!-- table body -->
+                        <!-- ---------- -->
+                        <tbody id="interfacesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <!-- *********************************** -->
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <!-- ============ -->
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal -->

@@ -1,0 +1,408 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block title%}<title>Pools</title>{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration</li>
+    <li><i class="fa fa-database"></i> Pools</li>
+</ol>
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block content_header%} Pools{% endblock %}
+{% block content %}
+
+<!-- New --><!-- Style added for the linkable rows in the table -->
+<!-- ========================================================== -->
+<style>
+
+    #pools_Table td a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: #000000;
+    }
+
+    #pools_Table td a:hover {
+        color: #000000;
+    }
+
+    #pools_Table td a:active {
+        color: #000000;
+    }
+
+    #pools_Table td a:visited {
+        color: #000000;
+    }
+
+</style>
+<!-- ============================================== -->
+
+<section class="content">
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <!-- /.box-header -->
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                    <!-- ########################################################################################### -->
+                    <!--                                    START OF PAGE CONTENT                                    -->
+                    <!-- ########################################################################################### -->
+
+                    <!-- Add New Pool Button -->
+                    <!-- =================== -->
+                    <br>
+
+                    <div>
+                        <form method="POST" action="{{ url_for('pool_controller.add_pool') }}" id="add_pool">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Add Pool
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- End Of Add New Rule Button -->
+                    <!-- ========================== -->
+
+                    <br>
+
+                    <div>
+
+                        <!-- Start of Table of Rules -->
+                        <!-- ======================= -->
+                        <table id="pools_Table" class="table table-bordered table-striped">
+
+                            <!-- table header -->
+                            <!-- ------------ -->
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>No of PGs</th>
+                                <th>Size</th>
+                                <th>Min Size</th>
+                                <th>Compression</th>
+                                <th>Compression Algorithm</th>
+                                <th>Rule Name</th>
+                                <th>Active OSDs</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+
+                            {% if pools_list%}
+                            <!-- ----------------------------------------------------------------------------------- -->
+
+                            <!-- table body -->
+                            <!-- ---------- -->
+                            <tbody>
+                            {% for item in pools_list%}
+                            <tr class="pool">
+
+                                <!-- print the name of the rule -->
+
+                                <!--<td class="name">{{ item.name }}</td>-->
+                                <!--<td>{{ item.pg_num }}</td>-->
+                                <!--<td>{{ item.replica_size }}</td>-->
+                                <!--<td>{{ item.replica_min_size }}</td>-->
+
+                                <!--{%if item.compression_mode == 'none'%}-->
+                                <!--<td>Disabled</td>-->
+                                <!--<td></td>-->
+                                <!--{%else%}-->
+                                <!--<td>Enabled</td>-->
+                                <!--<td>{{ item.compression_algorithm }}</td>-->
+                                <!--{%endif%}-->
+                                <!--<td>{{ item.rule_name }}</td>-->
+
+
+                                <td class="name">
+                                    <a id="poolName" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">{{
+                                        item.name }}</a>
+                                </td>
+
+                                <td class="type">
+                                    <a id="poolType" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">{%if
+                                        item.type == "erasure" %}EC{%else%}{{item.type}}{%endif%}</a>
+                                </td>
+
+
+                                <td>
+                                    <a id="poolPGs" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">{{
+                                        item.pg_num }}</a>
+                                </td>
+                                <td>
+                                    <a id="poolReplicaSize" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">{{
+                                        item.size }}</a>
+                                </td>
+                                <td>
+                                    <a id="poolMinReplicaSize" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">{{
+                                        item.min_size }}</a>
+                                </td>
+
+                                {%if item.compression_mode == 'none'%}
+                                <td>
+                                    <a id="poolCompression" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">Disabled</a>
+                                </td>
+                                <td>
+                                    <a id="poolCompressionAlg" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">
+                                        &nbsp;</a>
+                                </td>
+                                {%else%}
+                                <td>
+                                    <a id="poolCompression2" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">Enabled</a>
+                                </td>
+                                <td>
+                                    <a id="poolCompressionAlg2" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">{{
+                                        item.compression_algorithm }}</a>
+                                </td>
+                                {%endif%}
+
+                                <td>
+                                    <a id="poolRuleName" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">
+                                        {{ item.rule_name }}</a>
+                                </td>
+
+                                <td>
+                                    <a id="poolActiveOSDs" href="#" data-toggle="modal" data-target="#exampleModal"
+                                       onclick="return load_popup_info('{{ url_for('pool_controller.get_selected_pool_info', pool_name = item.name) }}')">
+                                        {%if item.active_osds > 0%}
+                                        {{ item.active_osds }}
+                                        {%endif%}
+                                    </a>
+                                </td>
+
+                                <td id="status_{{ item.name }}">
+
+                                    <!-- Has active pools -->
+                                    <!-- ---------------- -->
+                                    {% if active_pool_list %}
+
+                                    {% if (delete_job_id > 0 and pool_name==item.name) %}
+                                    <!-- if a pool is being deleted -->
+                                    <span class="badge bg-pending">Deleting</span>
+
+                                    {% else %}
+                                    {%if item.name in active_pool_list %}
+                                    <span class='badge bg-started'>Active</span>
+                                    {%else%}
+                                    <span class='badge bg-stop'>Inactive</span>
+                                    {%endif%}
+
+                                    {% endif %}
+
+                                    <!-- Has no active pools -->
+                                    <!-- ------------------- -->
+                                    {% elif not active_pool_list%}
+
+                                    {% if (delete_job_id > 0 and pool_name==item.name) %}
+                                    <!-- if a pool is being deleted -->
+                                    <span class="badge bg-pending">Deleting</span>
+                                    {% else %}
+                                    <span class='badge bg-stop'>Inactive</span>
+                                    {% endif %}
+
+                                    <!-- Waiting for active pools -->
+                                    <!-- ------------------------ -->
+                                    {% else %}
+
+                                    <span class="badge bg-pending">Checking</span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- Display Edit and Delete Buttons -->
+                                <!-- ------------------------------- -->
+                                <td>
+                                    <div title="Edit Pool" class="btn-group">
+
+                                        <!-- Button " Edit " -->
+                                        <form method="POST"
+                                              action="{{ url_for('pool_controller.get_pool_info',pool_name = item.name) }}"
+                                              id="edit_pool_form">
+                                            <input type="hidden" value="{{item}}" name="pool_info">
+                                            <button type="submit" class="btn btn-default pull-right">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+                                        </form>
+                                        <!-- End Of Button " Edit " -->
+
+                                    </div>
+
+                                    <div title="Delete Pool" class="btn-group">
+
+                                        <!-- Button " Delete " -->
+                                        <form action="{{ url_for('pool_controller.remove_pool',pool_name = item.name ,pool_type = item.type) }}"
+                                              method="POST" id="delete_pool_form">
+                                            <button onclick="return doDelete('{{item.name}}');" type="submit"
+                                                    class="btn btn-default confirm">
+                                                <i class="fa fa-remove"></i>
+                                            </button>
+                                        </form>
+                                        <!-- End Of Button " Delete " -->
+
+                                    </div>
+
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {%endif%}
+
+
+                            </tbody>
+                        </table>
+                        <!--   End of Table of Rules    -->
+                        <!-- ========================== -->
+
+
+                        <!-- ======================================================================================= -->
+                        <!-- New --><!-- Modal Of Rule Info Pop-Up -->
+                        <!-- ===================================== -->
+                        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                            {% include "admin/pool/view_pool.html" %}
+
+                        </div>
+
+                        <!-- New --><!-- End Of Modal Of Rule Info Pop-Up  -->
+                        <!-- ======================================================================================= -->
+
+                    </div>
+                </div>
+
+                <!-- ############################################################################################### -->
+                <!--                                        END OF PAGE CONTENT                                      -->
+                <!-- ############################################################################################### -->
+
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+<input type="hidden" id="messages1" value="{{ gettext('ui_admin_delete_pool_confirm_first_mesg') }}">
+<input type="hidden" id="messages2" value="{{ gettext('ui_admin_delete_pool_confirm_second_mesg') }}">
+<input type="hidden" id="messages3" value="{{ gettext('ui_admin_pool_delete_in_progress') }}">
+<input type="hidden" id="base_url" value="{{ base_url }}">
+<input type="hidden" id="delete_job_id" value="{{ delete_job_id }}">
+<input type="hidden" id="pool_name" value="{{ pool_name }}">
+
+{% endblock %}
+
+<!-- *************************************************************************************************************** -->
+
+{% block sidebar_menu %}
+{{macros.nav('Configurtion','Pools')}}
+{% endblock %}
+l
+<!-- *************************************************************************************************************** -->
+
+{% block js%}
+
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script>
+
+    var path = "{{ url_for('pool_controller.get_pools')}}";
+
+    $(function () {
+        $("#pools_Table").DataTable({
+            "columnDefs": [
+                {"orderable": false, "targets": [9,10]}
+            ]
+        });
+    });
+
+
+    var messages1 = $("#messages1").val();
+    var messages2 = $("#messages2").val();
+    var messages3 = $("#messages3").val();
+    var deleteInProgress = 0;
+
+    function doDelete(pool_name) {
+
+        var delete_job_id = $("#delete_job_id").val();
+
+        if (deleteInProgress == 1 || delete_job_id > 0) {
+
+            alert(messages3);
+            return false;
+        }
+
+        else {
+
+            deleteInProgress = 1;
+
+            var final_message1 = messages1.replace('$', pool_name);
+            var final_message2 = messages2;
+            var confirm1 = confirm(final_message1);
+
+            if (confirm1 == true) {
+                var confirm2 = confirm(final_message2);
+                if (confirm2 == true) {
+                    $('#status_' + pool_name).html("<span class='badge bg-pending'>Deleting</span>");
+                    return true;
+                }
+
+                else {
+                    deleteInProgress = 0;
+                    return false;
+                }
+            }
+
+            else {
+                deleteInProgress = 0;
+                return false;
+            }
+
+        }
+
+
+    }
+
+
+</script>
+<script src="/static/dist/js/pages/pool/pool_list.js?v=7777777"></script>
+
+{% endblock %}

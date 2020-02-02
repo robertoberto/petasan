@@ -1,0 +1,18 @@
+{
+# Placement rule per PG/object:
+# For N replicas, choose N distinct hosts
+# For each, choose a single HDD OSD disk
+# Number of replicas N is defined in Pool creation
+
+id 0
+type replicated
+
+# Min and max replication count defined in Pool
+min_size 1
+max_size 10
+
+# Placement logic
+step take default class hdd
+step chooseleaf firstn 0 type host
+step emit
+}

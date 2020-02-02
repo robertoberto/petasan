@@ -1,0 +1,8 @@
+[Unit]
+Description= PetaSAN Node Stats Service
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/scripts/node_stats.py
+Restart=always
+RestartSec=30

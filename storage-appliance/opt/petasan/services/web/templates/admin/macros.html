@@ -1,0 +1,404 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% macro nav(main='',sub='') %}
+<!-- ############################################################################################################### -->
+<!--                                              Start Of Side Bar List                                             -->
+<!-- ############################################################################################################### -->
+
+<ul class="sidebar-menu">
+    <!-- ...........................................   MAIN NAVIGATION   ........................................... -->
+    <li class="header">MAIN NAVIGATION</li>
+
+    <!-- ..............................................   Dashboard   .............................................. -->
+    <li {{
+    'class=active' if sub == 'Dashboard' }} ><a href="/">
+    <i class="fa fa-dashboard"></i> <span>Dashboard</span></a></li>
+
+
+    <!-- =========================================================================================================== -->
+    <!--                                        Start Of Configuration Menu                                          -->
+    <!-- =========================================================================================================== -->
+    {% if display_parent('NetworkConfiguration') %}
+    <li class="treeview  {{ 'class= active' if main ==  'Configurtion' }} ">
+
+        <!--   Configuration   -->
+        <a href="#">
+            <i class="fa fa-wrench "></i> <span> Configuration </span><i class="fa fa-angle-left pull-right"></i>
+        </a>
+
+        <ul class="treeview-menu">
+            <!--<li {{'class=active' if sub == 'Users' }} ><a href="../../index2.html"><i class="fa fa-users"></i> Users</a></li>-->
+
+            <!-- ........................................   iSCSI Settings   ....................................... -->
+            {% if display_url_by_page('NetworkConfiguration') %}
+            <li {{
+            'class=active' if sub == 'Iscsi Settings' }} ><a href="/configuration/IscsiSettings"><i
+                class="fa fa-cog"></i> iSCSI Settings</a>
+            </li>
+            {% endif %}
+
+            <!-- .......................................   General Settings   ...................................... -->
+            {% if display_url_by_page('InternetTimeServer') %}
+            <li {{
+            'class=active' if sub == 'General Settings' }} ><a href="/configuration/GeneralSettings"><i
+                class="fa fa-gears"></i> General Settings</a></li>
+            {% endif %}
+
+            {#
+            <li {{
+            'class=active' if sub == 'Disk' }} ><a href="/configuration/disk"><i class="fa fa-hdd-o"></i> Disk</a></li>#}
+
+
+                <!-- .......................................   EC Profiles   ...................................... -->
+
+            {% if display_url_by_page('ProfilesList') %}
+
+            <li {{
+            'class=active' if sub == 'ProfilesList' }} ><a href="/configuration/ec_profiles"><i
+                class="fa fa-file"></i> EC Profiles</a>
+            </li>
+            {% endif %}
+
+                <!-- .......................................   Pools   ...................................... -->
+
+            {% if display_url_by_page('PoolsList') %}
+
+            <li {{
+            'class=active' if sub == 'Pools' }} ><a href="/configuration/pools"><i
+                class="fa fa-database"></i> Pools</a>
+            </li>
+            {% endif %}
+
+
+             <!-- .......................................   Test   ...................................... -->
+
+            {% if display_url_by_page('test') %}
+
+          <!--  <li {{
+            'class=active' if sub == 'Backup' }} ><a href="/backup/test"><i
+                class="fa fa-archive"></i> Backup Disks</a>
+            </li> -->
+            {% endif %}
+
+
+            <!-- =================================================================================================== -->
+            <!--                                         Start Of Crush Menu                                         -->
+            <!-- =================================================================================================== -->
+            <li class="treeview  {{ 'class= active' if main ==  'Crush Map' }} ">
+
+                <!--   Crush   -->
+                <a href="#">
+                    <i class="fa fa-map "></i> <span>CRUSH</span> <i class="fa fa-angle-left pull-right"></i>
+                </a>
+
+                <ul class="treeview-menu">
+
+                    <!-- .......................................   Buckets   ....................................... -->
+                    {% if display_url_by_page('BucketTree') %}
+                    <li {{
+                    'class=active' if sub == 'Bucket Tree' }} ><a href="/crush/tree"><i class="fa fa-sitemap"></i> Buckets
+                    Tree</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- ........................................   Rules   ........................................ -->
+                    {% if display_url_by_page('RulesList') %}
+                    <li {{
+                    'class=active' if sub == 'Rules' }} ><a href="/crush/rules"><i class="fa fa-book"></i> Rules</a>
+                    </li>
+                    {% endif %}
+
+                </ul>
+            </li>
+        </ul>
+
+    </li>
+    {% endif %}
+
+
+    <!-- =========================================================================================================== -->
+    <!-- .........................................   Manage iSCSI Disks   .......................................... -->
+    <!-- =========================================================================================================== -->
+    {% if display_parent('ManageDisk') %}
+    <li class="treeview  {{ 'class= active ' if main ==  'Manage iSCSI Disks' }} ">
+
+        <!--   Manage iSCSI Disks   -->
+        <a href="#">
+            <i class="fa fa-server "></i> <span>Manage iSCSI Disks</span> <i class="fa fa-angle-left pull-right"></i>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <!-- ......................................   iSCSI Disk List   ........................................ -->
+            {% if display_url_by_page('DiskList') %}
+            <li {{ 'class=active' if sub == 'iSCSI Disk List' }} ><a href="/disk/list">
+            <i class="fa fa-list "></i>iSCSI Disks</a></li>
+            {% endif %}
+
+
+            <!-- ......................................   Path Assignment   ........................................ -->
+            {% if display_url_by_page('PathAssignment') %}
+            <li {{ 'class=active' if sub ==  'Path Assignment' }} ><a href="/disk/path_assignment/list">
+            <i class="fa fa-random  "></i>Path Assignment</a></li>
+            {% endif %}
+
+
+        </ul>
+
+    </li>
+    {% endif %}
+
+
+
+    <!-- =========================================================================================================== -->
+    <!--                                         Start Of Manage Node Menu                                           -->
+    <!-- =========================================================================================================== -->
+    {% if display_parent('ManageNode') %}
+    <li class="treeview  {{ 'class= active ' if main ==  'Manage Node' }} ">
+
+        <!--   Manage Nodes   -->
+        <a href="#">
+            <i class="fa fa-bars "></i> <span>Manage Nodes</span> <i class="fa fa-angle-left pull-right"></i>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <!-- .........................................   Node List   ........................................... -->
+            {% if display_url_by_page('NodeList') %}
+            <li {{
+            'class=active' if sub == 'Nodes List' }} ><a href="/node/list"><i class="fa fa-object-group"></i>Nodes List</a>
+            </li>
+            {% endif %}
+
+        </ul>
+
+    </li>
+    {% endif %}
+
+
+    <!-- =========================================================================================================== -->
+    <!--                                      Start Of Cluster Benchmark Menu                                        -->
+    <!-- =========================================================================================================== -->
+    {% if display_parent('ClusterBenchmark') %}
+    <li class="treeview  {{ 'class= active ' if main ==  'Cluster Benchmark' }} ">
+
+        <!--   Cluster Benchmark   -->
+        <a href="#">
+            <i class="fa fa-line-chart "></i> <span>Cluster Benchmark </span> <i class="fa fa-angle-left pull-right"></i>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <!-- .........................................   Benchmark   ........................................... -->
+            {% if display_url_by_page('ClusterBenchmark') %}
+            <li {{
+            'class=active' if sub == 'Benchmark' }} ><a href="/benchmark"><i class="fa fa-line-chart "></i> Benchmark </a>
+            </li>
+            {% endif %}
+
+        </ul>
+
+    </li>
+    {% endif %}
+
+
+    <!-- =========================================================================================================== -->
+    <!--                                          Start Of Maintenance Menu                                          -->
+    <!-- =========================================================================================================== -->
+    {% if display_parent('Maintenance') %}
+    <li class="treeview  {{ 'class= active ' if main ==  'Maintenance' }} ">
+
+        <!--   Maintenance   -->
+        <a href="#">
+            <i class="fa fa-ambulance "></i> <span>Maintenance</span> <i class="fa fa-angle-left pull-right"></i>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <!-- ....................................   Cluster Maintenance   ...................................... -->
+            {% if display_url_by_page('CLusterMaintenanceConfig') %}
+            <li {{
+            'class=active' if sub == 'CLuster Maintenance' }} ><a href="/maintenance/config"><i
+                class="fa fa-plus-square"></i> Cluster Maintenance </a>
+            </li>
+            {% endif %}
+
+
+            <!-- ....................................   Set Backfill Speed   ...................................... -->
+            {% if display_url_by_page('BackFillSpeed') %}
+            <li {{
+            'class=active' if sub == 'BackFill Speed' }} ><a href="/maintenance/config/backfill_speed"><i
+                class="fa fa-car"></i> Backfill Speed </a>
+            </li>
+            {% endif %}
+
+
+        </ul>
+
+    </li>
+    {% endif %}
+
+
+    <!-- =========================================================================================================== -->
+    <!--                                          Start Of Manage User Menu                                          -->
+    <!-- =========================================================================================================== -->
+    <li class="treeview  {{ 'class= active ' if main ==  'Manage User' }} ">
+
+        <!--   Manage Users   -->
+        <a href="#">
+            <i class="fa fa-user "></i> <span>Manage Users </span> <i class="fa fa-angle-left pull-right"></i>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <!-- .........................................   User List   ........................................... -->
+            {% if display_url_by_page('UserList') %}
+            <li {{
+            'class=active' if sub == 'Users List' }} ><a href="/user/list"><i class="fa fa-users "></i> User List</a>
+            </li>
+            {% endif %}
+
+
+            <!-- ......................................   Change Password   ........................................ -->
+            <li {{ 'class=active' if sub ==  'Chanage Password' }} ><a href="/user/changePassword"><i
+                    class="fa  fa-user-secret  "></i> Change Password</a></li>
+        </ul>
+
+    </li>
+
+<!-- =========================================================================================================== -->
+    <!-- .........................................   Replication   .......................................... -->
+    <!-- =========================================================================================================== -->
+    {% if display_parent('ScheduleJob') %}
+     <li class="treeview  {{ 'class= active ' if main ==  'ScheduleJobs' }} ">
+
+        <!--   Replication   -->
+        <a href="#">
+            <i class="fa fa-clone"></i> <span>Replication</span> <i class="fa fa-angle-left pull-right"></i>
+        </a>
+
+         <ul class="treeview-menu">
+
+            <!-- ......................................  new: Replication  ........................................ -->
+            {% if display_url_by_page('ReplicationJobs') %}
+                <li {{ 'class=active' if sub == 'ReplicationJobs' }} >
+                    <a href="/replication/job_list">
+                    <i class="fa fa-calendar"></i>Jobs
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if display_url_by_page('ReplicationUsers') %}
+                <li {{ 'class=active' if sub == 'ReplicationUsers' }} >
+                    <a href="/replication_users/users_list">
+                    <i class="fa fa-child"></i>Users
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if display_url_by_page('ReplicationClusters') %}
+                <li {{ 'class=active' if sub == 'ReplicationClusters' }} >
+                    <a href="/replication/destination_clusters/list">
+                    <i class="fa fa-desktop "></i>Destination Clusters
+                    </a>
+                </li>
+            {% endif %}
+
+            <!-- ......................................  new: Backup  ........................................ -->
+            {% if display_url_by_page('BackupDisk') %}
+                <li {{ 'class=active' if sub == 'BackupDisk' }} >
+                    <!-- <a href="/backup/backup_disk">
+                    <i class="fa fa-archive "></i>Backup
+                    </a> -->
+                </li>
+            {% endif %}
+        </ul>
+
+    </li>
+    {% endif %}
+
+
+    <!-- =========================================================================================================== -->
+    <!--                                          Put Your New Menu Here  !!!                                        -->
+    <!-- =========================================================================================================== -->
+
+
+<!-- ############################################################################################################### -->
+</ul>
+<!-- ############################################################################################################### -->
+<!--                                               End Of Side Bar List                                              -->
+<!-- ############################################################################################################### -->
+{% endmacro %}
+
+
+
+{% macro message(err=none,success=none,warning=none,info=none) %}
+
+{% if success  %}
+<div>
+    <div class="col-md-12">
+        <div class="alert alert-success alert-dismissable">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h5><i class="icon fa fa-check"></i> {{success}}</h5>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+<!-- ############################################################################################################### -->
+
+{% if err %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="alert alert-danger alert-dismissable">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h4><i class="icon fa fa-ban"></i> Alert!</h4>
+            {{err}}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ############################################################################################################### -->
+
+{% if warning %}
+<div class="alert alert-warning alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+    <h4><i class="icon fa fa-warning"></i> Alert!</h4>
+    <!--Warning alert preview. This alert is dismissable.-->
+    {{warning}}
+</div>
+{% endif %}
+
+<!-- ############################################################################################################### -->
+
+{% if info %}
+<div class="alert alert-info alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+    <h4><i class="icon fa fa-info"></i> Info</h4>
+    {{info}}
+</div>
+{% endif %}
+
+<!-- ############################################################################################################### -->
+
+{% endmacro %}
+
+<script>
+
+
+
+</script>

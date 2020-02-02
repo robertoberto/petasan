@@ -1,0 +1,23 @@
+[
+  {"base_url": "disk/add", "id": 1, "name": "AddDisk", "description": "","parent_group":"ManageDisk"},
+  {"base_url": "disk/list", "id": 2, "name": "DiskList", "description": "","parent_group":"ManageDisk"},
+  {"base_url": "configuration/IscsiSettings", "id": 3, "name": "NetworkConfiguration", "description": "","parent_group":"NetworkConfiguration"},
+  {"base_url": "user/add", "id": 5, "name": "AddUser", "description": "","parent_group":"ManageUser"},
+  {"base_url": "user/list", "id": 6, "name": "UserList", "description": "","parent_group":"ManageUser"},
+  {"base_url": "configuration/GeneralSettings", "id": 7, "name": "InternetTimeServer", "description": "","parent_group":"NetworkConfiguration"},
+  {"base_url": "node/list", "id": 8, "name": "NodeList", "description": "","parent_group":"ManageNode"},
+  {"base_url": "cluster_benchmark", "id": 9, "name": "ClusterBenchmark", "description": "","parent_group":"ClusterBenchmark"},
+  {"base_url": "maintenance/config", "id": 10, "name": "CLusterMaintenanceConfig", "description": "","parent_group":"Maintenance"},
+  {"base_url": "disk/path_assignment", "id": 11, "name": "PathAssignment", "description": "","parent_group":"ManageDisk"},
+  {"base_url": "crush/tree", "id": 12, "name": "BucketTree", "description": "","parent_group":"NetworkConfiguration"},
+  {"base_url": "crush/rules", "id": 13, "name": "RulesList", "description": "","parent_group":"NetworkConfiguration"},
+  {"base_url": "configuration/pools", "id": 14, "name": "PoolsList", "description": "","parent_group":"NetworkConfiguration"},
+  {"base_url": "configuration/ec_profiles", "id": 15, "name": "ProfilesList", "description": "","parent_group":"NetworkConfiguration"},
+
+  {"base_url": "backup/backup_disk", "id": 16 , "name": "BackupDisk", "description": "","parent_group":"ScheduleJob"},
+  {"base_url": "replication/job_list", "id": 17 , "name": "ReplicationJobs", "description": "","parent_group":"ScheduleJob"},
+  {"base_url": "maintenance/config/backfill_speed", "id": 18, "name": "BackFillSpeed", "description": "","parent_group":"Maintenance"},
+  {"base_url": "replication_users/users_list", "id": 19, "name": "ReplicationUsers", "description": "","parent_group":"ScheduleJob"},
+  {"base_url": "replication/destination_clusters/list", "id": 20 , "name": "ReplicationClusters", "description": "","parent_group":"ScheduleJob"}
+
+]

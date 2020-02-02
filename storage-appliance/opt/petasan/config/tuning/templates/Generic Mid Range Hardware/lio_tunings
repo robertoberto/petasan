@@ -1,0 +1,40 @@
+
+{
+  "storage_objects": [
+    {
+      "attributes": {
+        "block_size": 512,
+        "emulate_3pc": 1,
+        "emulate_caw": 1,
+        "emulate_tpu": 1,
+        "queue_depth": 256
+      }
+    }
+  ],
+
+  "targets": [
+    {
+
+      "tpgs": [
+        {
+          "attributes": {
+            "default_cmdsn_depth": 256
+          },
+
+          "parameters": {
+            "DefaultTime2Retain": "20",
+            "DefaultTime2Wait": "2",
+            "FirstBurstLength": "1048576",
+            "ImmediateData": "Yes",
+            "InitialR2T": "No",
+            "MaxBurstLength": "1048576",
+            "MaxOutstandingR2T": "16",
+            "MaxRecvDataSegmentLength": "1048576",
+            "MaxXmitDataSegmentLength": "1048576"
+          }
+        }
+
+      ]
+    }
+  ]
+}

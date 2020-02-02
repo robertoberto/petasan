@@ -1,0 +1,236 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+{% endblock %}
+
+{% block title %}<title>Path Assignment</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-server"></i> Path Assignment</li>
+    <li><i class="fa fa-list"></i> Path Assignment List</li>
+</ol>
+{% endblock %}
+{% block content_header %}Path Assignment List{% endblock %}
+{% block content %}
+<section class="content">
+
+
+    <div class="row">
+
+        <div class="col-xs-12">
+
+            <div class="box">
+                <form action="" method="post" id="form_submit">
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+
+
+
+                        <div class="row" id="assign_Validation_false" hidden>
+                            <div class="col-md-12">
+                                <div class="alert alert-danger alert-dismissable">
+                                    <button type="button" class="close" onclick="$('#assign_Validation_false').hide();"
+                                            aria-hidden="true">×
+                                    </button>
+                                    <h5 id="error_message"><i class="icon fa fa-ban"></i></h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="search_path_fail" hidden>
+                            <div class="col-md-12">
+                                <div class="alert alert-danger alert-dismissable">
+                                    <button type="button" class="close" onclick="$('#search_path_fail').hide();"
+                                            aria-hidden="true">×
+                                    </button>
+                                    <h5 id="failed_sent"><i class="icon fa fa-ban"></i>{{ gettext("ui_admin_disks_paths_assignment_select_search_type_and_enter_search_key") }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row form-group"></div>
+
+                        <div class="form-group">
+                                <div class="col-md-12"><label>Path Assignment :</label></div>
+                                <div class="form-group">
+                                    <div class="col-md-2">
+                                        <div class=""></div>
+                                        <div class="col-md-12"><label class="radio-inline"><input type="radio" name="path_assignment_type"
+                                                                       id="assign_manual" checked
+                                                                       onchange="onChangeSearchSection()" value="">Manual</label></div>
+
+                                </div>
+                                <div class="col-md-10" style="margin-left: -5%">
+                                    <label class="radio-inline"><input type="radio" name="path_assignment_type"
+                                                                       id="assign_automatic"
+                                                                       onchange="onChangeSearchSection()" value="">Automatic</label>
+                                </div>
+                                </div>
+                        </div>
+                        <div class="row form-group"></div>
+                        <div></div>
+                        <div class="form-group" id="path_count_distribution" hidden>
+
+                            <div class="col-md-12"><label>Distribute by:</label></div>
+                            <div class="form-group">
+                            <div class="col-md-2">
+                                    <div class=""></div>
+                                    <div class="col-md-12"><label class="radio-inline"><input type="radio" name=""
+                                                                   id="count_distribution" value="1">Path
+                                    Count</label></div>
+
+                            </div>
+                            <div class="col-md-10" style="margin-left: -5%">
+                                <label class="radio-inline"><input type="radio" name=""
+                                                                   id="resource_load" value="" disabled>Resource Load</label>
+                            </div>
+
+                        </div>
+                            </div>
+
+
+                        <div class="row"></div>
+
+                        <div style="margin-left: 12px; width: 98%; border: 1px solid #f4f4f4; padding: 10px;"
+                             id="search_section">
+                            <div class="row"></div>
+                            <div class="form-group">
+                                <div class="col-md-12"><label>Search by : </label></div>
+                                <div class="row"></div>
+                                <div class="col-md-5">
+                                    <div class="col-md-4">
+                                    <div class="form-group form-inline">
+                                        <label class="radio-inline"><input type="radio" name="search_path"
+                                               checked onchange="onChangeSearchOptions()" id="search_by_name_radio" value="">Disk Name
+                                            :</label></div>
+
+                                    </div><div>
+                                    <div class="col-md-8"><input class="form-control" type="text" name="disk_name" id="name"></div>
+                                </div>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <div class="col-md-3">
+                                        <div class="form-group form-inline">
+                                            <div>
+                                                <label class="radio-inline"><input type="radio" name="search_path"
+                                                       onchange="onChangeSearchOptions()"  id="search_by_ip_radio" value="">Path
+                                                    IP
+                                                    :</label></div>
+
+                                    </div>
+                                        </div>
+                                     <div class="col-md-9">
+
+                                        <div class="input-group">
+                                                    <div class="input-group-addon">
+                                                        <i class="fa fa-laptop"></i>
+                                                    </div>
+                                                    <input type="text" class="form-control"
+                                                           data-inputmask="'alias': 'ip'"
+                                                           data-mask
+                                                           id="ip" name="Subnet1_Ip_From" disabled>
+                                                </div>
+
+                                              </div>
+                                </div>
+
+
+                                <div class="col-md-2 form-group">
+                                    <button class="btn btn-primary" type="button" onclick="onSearchPaths()">Search
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row" id=""></div>
+                        </div>
+
+                        <div class="form-group" id="expand_and_collapse_buttons" style="margin-left: 5%">
+                        <div class="form-group">
+                        <div class="col-md-12 form-group">
+                            <a id="collapse_all" onclick="$.fn.collapseAll()" class="btn btn-primary" data-toggle="tooltip" title="Collapse All"><i
+                                    class="glyphicon glyphicon-chevron-right"></i><i
+                                    class="glyphicon glyphicon-chevron-right"></i></a>
+                             <a id="expand_all" onclick="$.fn.expandAll()"
+                               class="btn btn-primary" data-toggle="tooltip" title="Expand All"><i class="glyphicon glyphicon-chevron-down"></i>&nbsp;<i class="glyphicon glyphicon-chevron-down"></i></a>
+                        </div>
+
+                            </div>
+                    </div>
+
+                        <div>
+                        <div class="col-md-12">
+                            <div id="paths_table"></div>
+                        </div>
+                    </div>
+
+                        <div id="assign_to">
+                            <div class="col-md-4">
+                                <div class="form-group form-inline">
+                                    <label><i class=""></i>Assign To</label>
+                                    <select class="form-control" name="assign_to" id="nodes">
+                                        <option value="auto">Auto</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="box-footer">
+                        <button class="btn btn-primary pull-right" type="submit" id="assign_form">Assign</button>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+</section>
+{% endblock %}
+
+{% block sidebar_menu %}
+{{ macros.nav('Manage iSCSI Disks','Path Assignment') }}
+{% endblock %}
+
+
+{% block js %}
+
+    <script src="../../../static/plugins/input-mask/jquery.inputmask.js"></script>
+    <script src="../../../static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+    <script src="../../../static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script src="/static/dist/js/pages/disk/paths.js"></script>
+<script src="/static/dist/js/pages/disk/reassign_path.js?v=7777777"></script>
+
+<script>
+    var messages = new Object()
+    messages_node_validation = '{{ gettext("ui_admin_disks_paths_assignment_to_select_another_node") }}'
+    messages_select_paths_validation = '{{ gettext("ui_admin_disks_paths_assignment_to_select_the_paths_to_assign") }}'
+    messages_select_paths_type_validation = '{{ gettext("ui_admin_disks_paths_assignment_to_select_the_paths_type") }}'
+    var paths_redirect_search_button = "{{  url_for('disk_controller.paths_list') }}"
+    var get_disks_paths = "{{ url_for('disk_controller.get_assignments_status') }}"
+    var get_disks_paths_by_name = "{{ url_for('disk_controller.search_by_name' , disk_name= '') }}"
+    var get_disks_paths_by_ip = "{{ url_for('disk_controller.search_by_ip' , ip= '') }}"
+    var send_auto_paths = "{{ url_for('disk_controller.auto_assign_paths' , type= '') }}"
+    var send_manual_paths = "{{ url_for('disk_controller.manual_assign_paths') }}"
+    var loginUrl = "{{ url_for('main_controller.login') }}";
+</script>
+
+
+{% endblock %}
+

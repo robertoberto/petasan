@@ -1,0 +1,8 @@
+[Unit]
+Description= PetaSAN sync replication node
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/scripts/backups/sync_replication_node.py
+Restart=no
+RemainAfterExit=yes

@@ -1,0 +1,151 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title%}<title>Backfill Speed</title>{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb">
+    <li><i class="fa fa-ambulance"></i>&nbsp;&nbsp;Maintenance </li>
+    <li><i class="fa fa-car"></i>&nbsp;&nbsp;Backfill Speed </li>
+</ol>
+{% endblock %}
+
+
+{% block content_header%} Backfill Speed {% endblock %}
+{% block content %}
+
+<section class="content">
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                    <!-- ########################################################################################### -->
+                    <!--                                    START OF PAGE CONTENT                                    -->
+                    <!-- ########################################################################################### -->
+                    <br>
+                    <form id="set_BackFill_form" method="POST" action="{{url_for('maintenance_controller.save_backfill_speed')}}">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="col-md-7">
+                                        <div class="form-group">
+                                            <label for="backfillSpeeds" id="backfillSpeeds_lbl">Set Backfill Speed:<font
+                                                    color="red">*</font>
+                                                <i data-toggle="tooltip"
+                                                   title='{{ gettext("ui_admin_set_backfill_tooltip_msg") }}'
+                                                   class="fa fa-fw fa-info-circle">
+                                                </i>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-7">
+
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <select id="backfillSpeeds" name="backfillSpeeds" size="5" width="320" style="width: 320px">
+                                                    <option style="height:30px;padding-top: 6px;padding-left: 5px;" value="1">Very Slow</option>
+                                                    <option style="height:30px;padding-top: 6px;padding-left: 5px;" value="2">Slow</option>
+                                                    <option style="height:30px;padding-top: 6px;padding-left: 5px;" value="3">Medium</option>
+                                                    <option style="height:30px;padding-top: 6px;padding-left: 5px;" value="4">Fast</option>
+                                                    <option style="height:30px;padding-top: 6px;padding-left: 5px;" value="5">Very Fast</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-7">
+                                        &nbsp;
+                                    </div>
+
+
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <div class="box-footer">
+                                                <button type="submit" class="btn btn-primary pull-right "
+                                                        value="submit">Set
+                                                </button>
+                                                <!--
+                                                <button type="button" style="margin-right: 10px"
+                                                        class="btn btn-default pull-right" id="cancelBtn"
+                                                        value="cancel">Cancel
+                                                </button>
+                                                -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- ########################################################################################### -->
+                    <!--                                     END OF PAGE CONTENT                                     -->
+                    <!-- ########################################################################################### -->
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Maintenance','BackFill Speed')}}
+{% endblock %}
+
+{% block js%}
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+<script>
+$("#set_BackFill_form").submit(function (event)
+{
+    // ==============================
+    // Validation of backfillSpeeds :
+    // ==============================
+    var messages = {}
+    messages.select_backfill_speed_empty = '{{ gettext("ui_admin_select_backfill_speed_empty") }}';
+
+    var speed = $("#backfillSpeeds");
+    var speedValue = $("#backfillSpeeds").val();
+
+    // check if empty //
+    // -------------- //
+    if (!(speedValue)) {
+        $("#backfillSpeeds_lbl").text(messages.select_backfill_speed_empty);
+        speed.closest('.form-group').addClass('has-error');
+//        speed.focus();
+        event.preventDefault();
+    }
+
+});
+</script>
+
+
+{% endblock %}

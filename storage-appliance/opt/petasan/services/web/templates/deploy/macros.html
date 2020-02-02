@@ -1,0 +1,56 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+
+
+{% macro message(err=none,success=none,warning=none) %}
+{% if success  %}
+<div>
+
+    <div class="col-md-12">
+        <div class="alert alert-success alert-dismissable">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h5><i class="icon fa fa-check"></i> {{success}}</h5>
+
+        </div>
+    </div>
+
+</div>
+
+{% endif %}
+
+{% if err %}
+<div class="row">
+
+    <div class="col-md-12">
+        <div class="alert alert-danger alert-dismissable">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h4><i class="icon fa fa-ban"></i> Alert!</h4>
+            {{err}}
+        </div>
+    </div>
+
+</div>
+{% endif %}
+
+
+{% if warning %}
+<div class="alert alert-warning alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+    <h4><i class="icon fa fa-warning"></i> Alert!</h4>
+    Warning alert preview. This alert is dismissable.
+</div>
+
+{% endif %}
+{% endmacro %}

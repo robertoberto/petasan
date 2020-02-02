@@ -1,0 +1,160 @@
+--- a/src/librbd/WatchNotifyTypes.cc	2019-04-25 20:15:48.000000000 +0200
++++ b/src/librbd/WatchNotifyTypes.cc	2019-07-17 02:04:46.000000000 +0200
+@@ -309,6 +309,20 @@ void SparsifyPayload::dump(Formatter *f)
+   f->dump_unsigned("sparse_size", sparse_size);
+ }
+ 
++void PreSnapPayload::encode(bufferlist &bl) const {
++  using ceph::encode;
++  encode(flush_timeout, bl);
++}
++
++void PreSnapPayload::decode(__u8 version, bufferlist::const_iterator &iter) {
++  using ceph::decode;
++  decode(flush_timeout, iter);
++}
++
++void PreSnapPayload::dump(Formatter *f) const {
++  f->dump_unsigned("flush_timeout", flush_timeout);
++}
++
+ void UnknownPayload::encode(bufferlist &bl) const {
+   ceph_abort();
+ }
+@@ -391,6 +405,9 @@ void NotifyMessage::decode(bufferlist::c
+   case NOTIFY_OP_SPARSIFY:
+     payload = SparsifyPayload();
+     break;
++  case NOTIFY_OP_PRE_SNAP:
++    payload = PreSnapPayload();
++    break;
+   default:
+     payload = UnknownPayload();
+     break;
+@@ -508,6 +525,9 @@ std::ostream &operator<<(std::ostream &o
+   case NOTIFY_OP_SPARSIFY:
+     out << "Sparsify";
+     break;
++  case NOTIFY_OP_PRE_SNAP:
++    out << "Presnap";
++    break;
+   default:
+     out << "Unknown (" << static_cast<uint32_t>(op) << ")";
+     break;
+--- a/src/librbd/Operations.cc	2019-04-25 20:15:48.000000000 +0200
++++ b/src/librbd/Operations.cc	2019-07-17 00:00:54.000000000 +0200
+@@ -754,6 +754,18 @@ void Operations<I>::execute_snap_create(
+     return;
+   }
+ 
++  if(m_image_ctx.exclusive_lock == nullptr) {
++    // flush writes in active/active clients
++    C_SaferCond notify_ctx;
++    m_image_ctx.image_watcher->notify_pre_snap(5, &notify_ctx);
++    if(notify_ctx.wait() < 0) {
++      ldout(cct, 1) << this << " " << __func__ << " notify_pre_snap error" 
++                    << dendl;
++      // on_finish->complete(-EINVAL);
++      // return;
++    }
++  }
++
+   m_image_ctx.snap_lock.get_read();
+   if (m_image_ctx.get_snap_id(snap_namespace, snap_name) != CEPH_NOSNAP) {
+     m_image_ctx.snap_lock.put_read();
+--- a/src/librbd/WatchNotifyTypes.h	2019-04-25 20:15:48.000000000 +0200
++++ b/src/librbd/WatchNotifyTypes.h	2019-07-17 02:07:20.000000000 +0200
+@@ -67,6 +67,7 @@ enum NotifyOp {
+   NOTIFY_OP_UPDATE_FEATURES    = 15,
+   NOTIFY_OP_MIGRATE            = 16,
+   NOTIFY_OP_SPARSIFY           = 17,
++  NOTIFY_OP_PRE_SNAP           = 101,
+ };
+ 
+ struct AcquiredLockPayload {
+@@ -326,6 +327,20 @@ struct SparsifyPayload : public AsyncReq
+   void dump(Formatter *f) const;
+ };
+ 
++struct PreSnapPayload {
++  static const NotifyOp NOTIFY_OP = NOTIFY_OP_PRE_SNAP;
++  static const bool CHECK_FOR_REFRESH = true;
++
++  uint32_t flush_timeout;
++
++  PreSnapPayload() : flush_timeout(0) {}
++  PreSnapPayload(uint32_t flush_timeout) : 
++    flush_timeout(flush_timeout) {}
++  void encode(bufferlist &bl) const;
++  void decode(__u8 version, bufferlist::const_iterator &iter);
++  void dump(Formatter *f) const;
++};
++
+ struct UnknownPayload {
+   static const NotifyOp NOTIFY_OP = static_cast<NotifyOp>(-1);
+   static const bool CHECK_FOR_REFRESH = false;
+@@ -353,6 +368,7 @@ typedef boost::variant<AcquiredLockPaylo
+                        UpdateFeaturesPayload,
+                        MigratePayload,
+                        SparsifyPayload,
++                       PreSnapPayload,
+                        UnknownPayload> Payload;
+ 
+ struct NotifyMessage {
+--- a/src/librbd/ImageWatcher.h	2019-04-25 20:15:48.000000000 +0200
++++ b/src/librbd/ImageWatcher.h	2019-07-17 02:08:25.000000000 +0200
+@@ -78,6 +78,7 @@ public:
+   void notify_header_update(Context *on_finish);
+   static void notify_header_update(librados::IoCtx &io_ctx,
+                                    const std::string &oid);
++  void notify_pre_snap(uint32_t flush_timeout,Context *on_finish);
+ 
+ private:
+   enum TaskCode {
+@@ -243,6 +244,8 @@ private:
+                       C_NotifyAck *ctx);
+   bool handle_payload(const watch_notify::SparsifyPayload& payload,
+                       C_NotifyAck *ctx);
++  bool handle_payload(const watch_notify::PreSnapPayload& payload,
++                      C_NotifyAck *ctx);
+   bool handle_payload(const watch_notify::UnknownPayload& payload,
+                       C_NotifyAck *ctx);
+   void process_payload(uint64_t notify_id, uint64_t handle,
+--- a/src/librbd/ImageWatcher.cc	2019-04-25 20:15:48.000000000 +0200
++++ b/src/librbd/ImageWatcher.cc	2019-07-17 02:09:28.000000000 +0200
+@@ -13,6 +13,7 @@
+ #include "librbd/exclusive_lock/Policy.h"
+ #include "librbd/image_watcher/NotifyLockOwner.h"
+ #include "librbd/io/AioCompletion.h"
++#include "librbd/io/ImageRequestWQ.h"
+ #include "librbd/watcher/Utils.h"
+ #include "include/encoding.h"
+ #include "common/errno.h"
+@@ -574,6 +575,12 @@ int ImageWatcher<I>::prepare_async_reque
+ }
+ 
+ template <typename I>
++void ImageWatcher<I>::notify_pre_snap(uint32_t flush_timeout,
++                                          Context *on_finish) {
++  send_notify(PreSnapPayload(flush_timeout), on_finish);
++}
++
++template <typename I>
+ bool ImageWatcher<I>::handle_payload(const HeaderUpdatePayload &payload,
+ 			             C_NotifyAck *ack_ctx) {
+   ldout(m_image_ctx.cct, 10) << this << " image header updated" << dendl;
+@@ -996,6 +1003,14 @@ bool ImageWatcher<I>::handle_payload(con
+   return true;
+ }
+ 
++template <typename I>
++bool ImageWatcher<I>::handle_payload(const PreSnapPayload &payload,
++			             C_NotifyAck *ack_ctx) {
++  ldout(m_image_ctx.cct, 10) << this << " remote pre snap request " 
++                              << dendl;
++  return true;
++}
++
+ template <typename I>
+ bool ImageWatcher<I>::handle_payload(const UnknownPayload &payload,
+ 			             C_NotifyAck *ack_ctx) {

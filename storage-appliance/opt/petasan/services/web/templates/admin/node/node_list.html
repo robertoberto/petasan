@@ -1,0 +1,167 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<!-- Ionicons -->
+<link rel="stylesheet" href="../../../static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="../../../static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title %}<title>Nodes List</title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-bars"></i> Manage Nodes</li>
+    <li><i class="fa fa-object-group"></i> Nodes List</li>
+</ol>
+{% endblock %}
+{% block content_header %}Nodes List{% endblock %}
+{% block content %}
+<section class="content">
+
+    <div class="row">
+
+        <div class="col-xs-12">
+
+            <div class="box">
+
+                <!- - /.box-header -->
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+                    <table id="nodeList" class="table table-bordered table-striped table-align-mid ">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Management IP</th>
+                            <th>Status</th>
+                            <th>Action
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for node in nodeList %}
+                        <tr class="node">
+                            <td class="name">{{ node.name }}</td>
+
+                            <td>
+                                {% if node.is_management == True %}
+                                Management
+                                {% else %}
+                                Storage
+                                {% endif %}
+                            </td>
+                            <td>{{ node.management_ip }}</td>
+                            <td>
+                                {% if node.status == nodeStatus.up %}
+                                <span class="badge bg-started">Up</span>
+                                {% elif node.status == nodeStatus.down %}
+                                <span class="badge bg-stop">Down</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if node.is_management == False and node.status == nodeStatus.down %}
+                                <div title="Delete" class="btn-group">
+                                    <form action="{{ url_for('node_controller.remove_node', node_name=node.name) }}" method="post">
+                                        <button type="submit" class="btn btn-default"
+                                                onclick= "return dNode('{{ node.name }}')">
+                                            <i class="fa fa-fw fa-remove"></i></button>
+                                    </form>
+                                </div>
+                                {% elif node.status ==nodeStatus.up %}
+                                <div title="Physical Disk List" class="btn-group">
+                                    <form action="{{ url_for('node_controller.disk_list', node_name=node.name) }}" method="get">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-fw fa-database"></i></button>
+                                    </form>
+                                </div>
+
+
+                                <div title="View Log" class="btn-group">
+                                    <form action="{{ url_for('node_controller.node_show_log', node_name=node.name) }}" method="get">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-fw fa-list"></i></button>
+                                    </form>
+                                </div>
+
+                                <div title="Node Role Setting" class="btn-group">
+                                    <form action="{{ url_for('node_controller.node_manage_roles', node_name=node.name) }}" method="get">
+                                        <button type="submit" class="btn btn-default">
+                                            <i class="fa fa-fw fa-cog"></i></button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- /.box -->
+            <!--/row-->
+
+        </div>
+
+        <!-- /.col (right) -->
+    </div>
+    <!-- /.row -->
+</section>
+<input type="hidden" id="messages" value ="{{gettext('ui_admin_confirm_delete_node') }}">
+<!-- /.content -->
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Manage Node','Nodes List')}}
+{% endblock %}
+
+
+{% block js%}
+<!-- DataTables -->
+
+
+<script src="/static/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+<script>
+    $(function () {
+        $("#nodeList").DataTable({
+            "bPaginate": false,
+
+
+            "columnDefs": [
+                {"orderable": false, "targets": [4]}
+
+            ]
+        });
+    });
+
+    var messages = $('#messages').val();
+    function dNode(node_name){
+        var final_message = messages.replace('$', node_name);
+        var confirm_var = confirm(final_message);
+        if(confirm_var == true) {
+            return true;
+        } else{
+            return false;
+        }
+    }
+</script>
+
+{% endblock %}
+

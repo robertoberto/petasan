@@ -1,0 +1,194 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title%}<title>EC Profiles</title>{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration</li>
+    <li><i class="fa fa-file"></i> EC Profiles</li>
+</ol>
+{% endblock %}
+
+
+{% block content_header%} EC Profiles{% endblock %}
+{% block content %}
+
+<style>
+
+    #profiles_table td  a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: #000000;
+    }
+
+    #profiles_table td  a:hover {
+      color: #000000;
+    }
+
+    #profiles_table td  a:active {
+      color: #000000;
+    }
+
+    #profiles_table td  a:visited {
+      color: #000000;
+    }
+
+</style>
+
+<section class="content">
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-body">
+                    {{macros.message(gettext(err),gettext(success),gettext(warning))}}
+
+                    <br>
+
+                    <div>
+                        <form method="POST" action="{{ url_for('ec_profile_controller.add_ec_profile') }}" id="add_ec_profile">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Add EC Profile
+                            </button>
+                        </form>
+                    </div>
+
+                    <br>
+
+                    <div>
+
+                        <table id="profiles_table" class="table table-bordered table-striped">
+
+                            <thead>
+                            <tr>
+                                <th style="width: 25%">Name</th>
+                                <th style="width: 25%">K</th>
+                                <th style="width: 25%">M</th>
+                                <th style="width: 25%">Action</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+
+                            {% if profiles_list%}
+
+
+                            {% for profile_name , profile in profiles_list.items() %}
+                            <tr class="profile">
+
+                                <td class="name">
+                                    <a id="profileName" href="#" data-toggle="modal" data-target="#exampleModal" name="{{ profile_name }}"
+                                       onclick="load_profile_info(name)">{{ profile_name }}</a>
+                                </td>
+
+                                <td>
+                                    <a href="#" data-toggle="modal" data-target="#exampleModal" name="{{ profile_name }}"
+                                       onclick="return load_profile_info(name)">{% if profile.k > 0 %} {{ profile.k }} {% endif %}</a>
+                                </td>
+
+                                <td>
+                                    <a href="#" data-toggle="modal" data-target="#exampleModal" name="{{ profile_name }}"
+                                       onclick="return load_profile_info(name)">{% if profile.m > 0 %} {{ profile.m }} {% endif %}</a>
+                                </td>
+
+                                <td>
+
+                                    <div title="Delete profile" class="btn-group">
+
+                                        <form action="{{ url_for('ec_profile_controller.remove_profile',profile_name = profile.name) }}"
+                                              method="POST" id="delete_profile_form">
+                                            <button onclick="return doDelete('{{ profile_name }}');" type="submit"
+                                                    class="btn btn-default confirm">
+                                                <i class="fa fa-remove"></i>
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {%endif%}
+
+
+                            </tbody>
+                        </table>
+
+                        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                            {% include "admin/ec_profile/view_profile.html" %}
+
+                        </div>
+
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('Configurtion','ProfilesList')}}
+{% endblock %}
+
+{% block js%}
+
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script>
+    $(function () {
+        $("#profiles_table").DataTable({
+            "columnDefs": [
+                {"orderable": false, "targets": [3]}
+            ]
+        });
+    });
+</script>
+<script>
+    var messages = {}
+    messages.confirm_deleting_ecProfile = '{{ gettext("ui_admin_confirm_delete_ecProfile") }}';
+</script>
+<script src="/static/dist/js/pages/ec_profile/profiles_list.js?"></script>
+
+{% endblock %}

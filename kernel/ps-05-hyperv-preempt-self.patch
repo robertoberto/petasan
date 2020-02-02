@@ -1,0 +1,65 @@
+diff -upr -x '*.[^ch]' a/drivers/target/target_core_rbd.c b/drivers/target/target_core_rbd.c
+--- a/drivers/target/target_core_rbd.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/target/target_core_rbd.c	2018-07-19 09:41:02.152007404 +0200
+@@ -2386,14 +2386,14 @@ tcm_rbd_pr_info_rm_regs_key(struct tcm_r
+ 	}
+ 
+ 	list_for_each_entry_safe(reg, reg_n, &pr_info->regs, regs_node) {
+-		if (reg == existing_reg)
++		if (new_key && (reg->key != new_key))
+ 			continue;
+ 
+-		if (new_key && (reg->key != new_key))
++		found = true;
++		if (reg == existing_reg)
+ 			continue;
+ 
+ 		tcm_rbd_pr_info_clear_reg(pr_info, reg);
+-		found = true;
+ 
+ 		/* TODO flag UA if different IT nexus */
+ 	}
+@@ -2550,6 +2550,7 @@ retry:
+ 	}
+ 
+ 	rc = tcm_rbd_pr_info_rm_regs_key(pr_info, existing_reg, new_key);
++	/* Allow pre-emption by current reservation holder
+ 	if (rc == -ENOENT) {
+ 		ret = TCM_RESERVATION_CONFLICT;
+ 		goto err_info_free;
+@@ -2557,6 +2558,7 @@ retry:
+ 		ret = TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+ 		goto err_info_free;
+ 	}
++	*/
+ 	tcm_rbd_pr_info_rsv_clear(pr_info);
+ 	rsv = NULL;
+ 	rc = tcm_rbd_pr_info_rsv_set(pr_info, existing_reg->key,
+@@ -3031,6 +3033,27 @@ err_info_free:
+ 	return ret;
+ }
+ 
++void petasan_pr_debug(char* command,struct tcm_rbd_pr_info *pr_info,char* nexus_buf,int val, u64 key)
++{
++	struct tcm_rbd_pr_reg *reg;
++	pr_debug("petasan_pr_debug ----------------------------------------- \n");
++	pr_debug("petasan_pr_debug command:%s   \n",command);
++	pr_debug("petasan_pr_debug nexus_buf:%s   \n",nexus_buf);
++	pr_debug("petasan_pr_debug val:%d   \n",val);
++	pr_debug("petasan_pr_debug key:0x%016Lx   \n",key);
++	if ( pr_info->rsv) {
++		pr_debug("petasan_pr_debug existing pr type:%d it_nexus:%s  key:0x%016Lx \n",pr_info->rsv->type,pr_info->rsv->it_nexus,pr_info->rsv->key);
++	}
++
++	list_for_each_entry(reg, &pr_info->regs, regs_node) {
++		pr_debug("petasan_pr_debug existing reg it_nexus:%s  key:0x%016Lx   \n",reg->it_nexus, reg->key);
++	}
++
++	pr_debug("petasan_pr_debug ----------------------------------------- \n\n");
++}
++
++
++
+ static struct target_pr_ops tcm_rbd_pr_ops = {
+ 	.check_conflict		= tcm_rbd_execute_pr_check_conflict,
+ 	.scsi2_reserve		= tcm_rbd_execute_pr_scsi2_reserve,

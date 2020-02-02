@@ -1,0 +1,48 @@
+diff -upr -x '*.[^ch]' a/drivers/target/iscsi/iscsi_target.c b/drivers/target/iscsi/iscsi_target.c
+--- a/drivers/target/iscsi/iscsi_target.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/target/iscsi/iscsi_target.c	2018-07-19 09:44:18.380013629 +0200
+@@ -3336,6 +3336,7 @@ iscsit_build_sendtargets_response(struct
+ 	unsigned char buf[ISCSI_IQN_LEN+12]; /* iqn + "TargetName=" + \0 */
+ 	unsigned char *text_in = cmd->text_in_ptr, *text_ptr = NULL;
+ 	bool active;
++	int matched_portal;
+ 
+ 	buffer_len = min(conn->conn_ops->MaxRecvDataSegmentLength,
+ 			 SENDTARGETS_BUF_LIMIT);
+@@ -3371,6 +3372,36 @@ iscsit_build_sendtargets_response(struct
+ 
+ 		target_name_printed = 0;
+ 
++		/* PetaSAN send targets with matching portal ip */ 
++		matched_portal =0;
++		spin_lock(&tiqn->tiqn_tpg_lock);
++		list_for_each_entry(tpg, &tiqn->tiqn_tpg_list, tpg_list) {
++			spin_lock(&tpg->tpg_np_lock);		
++			list_for_each_entry(tpg_np, &tpg->tpg_gnp_list,tpg_np_list) {
++				struct iscsi_np *np = tpg_np->tpg_np;
++/*
++				if (  np->np_ip != NULL && strcmp(conn->local_ip , np->np_ip) == 0 )
++					matched_portal = 1;
++*/
++				if (conn->local_sockaddr.ss_family == AF_INET) {
++					struct sockaddr_in* local_sockaddr_in = (struct sockaddr_in *)&conn->local_sockaddr;
++					struct sockaddr_in* np_sockaddr_in    = (struct sockaddr_in *)&np->np_sockaddr;
++
++					if( memcmp((char *)&local_sockaddr_in->sin_addr,(char *)&np_sockaddr_in->sin_addr ,sizeof(struct in_addr) ) == 0)
++						matched_portal = 1;
++				}
++
++				if( matched_portal == 1 )
++					break;
++			}
++			spin_unlock(&tpg->tpg_np_lock);
++			if( matched_portal == 1 )
++				break;
++		}
++		spin_unlock(&tiqn->tiqn_tpg_lock);
++		if (matched_portal !=1)
++			continue; 
++		
+ 		spin_lock(&tiqn->tiqn_tpg_lock);
+ 		list_for_each_entry(tpg, &tiqn->tiqn_tpg_list, tpg_list) {
+ 

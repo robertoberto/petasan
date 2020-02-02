@@ -1,0 +1,381 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block title %}<title>Dashboard</title>{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-dashboard"></i> Home</li>
+</ol>
+{% endblock %}
+
+{% block content_header %} Dashboard {% endblock %}
+
+{% block content %}
+<section class="content">
+
+    <!-- *********************************************************************************************************** -->
+    <!-- *********************************************************************************************************** -->
+
+    <div class="row">
+
+        <!-- ------------------------------------------------------------------------------------------------------- -->
+        <!--                                                 Storage                                                 -->
+        <!-- ------------------------------------------------------------------------------------------------------- -->
+        <div class="col-md-3">
+            <div class="box box-default">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Storage</h3>
+
+                    <div class="box-tools pull-right">
+                        <button class="btn btn-box-tool" data-widget="collapse"
+                                data-toggle="tooltip" title="Collapse">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="box-body" style="padding-bottom: 13px;">
+                    <div class="text-center">
+                        <div>
+                            <input id="availableStorage" disabled value="0" class="knob availableStorage"
+                                   value="30" data-skin="tron" data-thickness="0.2" data-width="130"
+                                   data-height="130" data-fgcolor="#3c8dbc" readonly="readonly"
+                                   data-cursor=false data-readonly="true" type="text"/>
+                        </div>
+                        <div class="knob-label"></div>
+                        <div>
+                            <strong>
+                                <center id="utilization_info" style="font-size: 12px;"></center>
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ------------------------------------------------------------------------------------------------------- -->
+        <!--                                       Ceph Health & Maintenance                                         -->
+        <!-- ------------------------------------------------------------------------------------------------------- -->
+
+        <div class="col-md-2">
+            <!--  =============  -->
+            <!--   Ceph Health   -->
+            <!--  =============  -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="box box-default" style="/*height: 222.60px;*/">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Ceph Health</h3>
+
+                            <div class="box-tools pull-right">
+                                <button class="btn btn-box-tool" data-widget="collapse"
+                                        data-toggle="tooltip" title="Collapse">
+                                    <i class="fa fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="box-body" style="padding-bottom: 10px">
+                            <div class="text-center " id="ceph_health" style="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--  =============  -->
+            <!--   Maintenance   -->
+            <!--  =============  -->
+            <div class="row">
+                <div class="col-md-12">
+                    <!-->
+                    <div class="box box-default" style="">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Maintenance</h3>
+
+                            <div class="box-tools pull-right">
+                                <button class="btn btn-box-tool" data-widget="collapse"
+                                        data-toggle="tooltip" title="Collapse">
+                                    <i class="fa fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="box-body" style="padding-bottom: 10px">
+                            <div class="text-center" id="maintenance_status" style="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- --------------------------------------------------------------------------------------------------- -->
+            <div class='modal fade' id='modal-default'>
+                <div class='modal-dialog' style='width: 900px;'>
+                    <div class='modal-content'>
+                        <div class='modal-header'>
+                            <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                                <span aria-hidden='true'>×</span>
+                            </button>
+                            <h4 class='modal-title' id='modal_title'>Ceph Health</h4>
+                        </div>
+                        <div class='modal-body' id='modal_body'>
+                        </div>
+                        <div class='modal-footer' style='border-top: none;'>
+                            <button type='button' class='btn btn-default' data-dismiss='modal'>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ------------------------------------------------------------------------------------------------------- -->
+        <!--                                         Ceph Cluster OSD Status                                         -->
+        <!-- ------------------------------------------------------------------------------------------------------- -->
+
+        <div class="col-md-7">
+            <div class="box box-default">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Ceph Cluster OSD Status</h3>
+
+                    <div class="box-tools pull-right">
+                        <button class="btn btn-box-tool" data-widget="collapse"
+                                data-toggle="tooltip" title="Collapse">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="box-body" style="display: block;">
+                    <div class="col-md-4 storage-osd">
+                        <div class="small-box bg-purple">
+                            <div class="inner" style="text-align: center;">
+                                <h3 style="font-size: 25px">Total</h3>
+
+                                <span class="info-box-number" id="total" style="font-size: 35px"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 storage-osd">
+                        <div class="small-box bg-green">
+                            <div class="inner" style="text-align: center;">
+                                <h3 style="font-size: 25px">Up</h3>
+
+                                <span class="info-box-number" id="up" style="font-size: 35px"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 storage-osd">
+                        <div class="small-box bg-red">
+                            <div class="inner" style="text-align: center;">
+                                <h3 style="font-size: 25px">Down</h3>
+
+                                <span class="info-box-number" id="down" style="font-size: 35px"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- *********************************************************************************************************** -->
+    <!-- *********************************************************************************************************** -->
+
+    <div class="row" style="padding-bottom: 10px;">
+        <div class="col-md-12">
+
+            <!-- --------------------------------------------------------------------------------------------------- -->
+            <!--                                             View Chart                                              -->
+            <!-- --------------------------------------------------------------------------------------------------- -->
+
+            <h5 style="float: left; margin-right: 10px; padding-left: 16px;">View Chart</h5>
+            <select id="chart" name="chart" onchange="update_links();"
+                    style="margin-top: 7px; float: left; margin-right: 50px;">
+                <option value="1">Cluster Storage</option>
+                <option value="2">Throughput</option>
+                <option value="3">IOPS</option>
+                <option value="4">Monitor Status</option>
+                <option value="5">OSD Status</option>
+                <option value="6">OSD Commit Latency</option>
+                <option value="7">OSD Apply Latency</option>
+                <option value="8">PG Status</option>
+                <option value="9">Node Statistics</option>
+            </select>
+
+            <!-- --------------------------------------------------------------------------------------------------- -->
+            <!--                                                Node                                                 -->
+            <!-- --------------------------------------------------------------------------------------------------- -->
+
+            <div id="node_section" style="display: none;">
+                <h5 style="float: left; margin-right: 10px;">Node</h5>
+                <select id="node" name="node" onchange="update_links();"
+                        style="margin-top: 7px; float: left; margin-right: 50px;">
+                    {% for node in node_list %}
+                    <option value="{{ node.name }}">{{ node.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- --------------------------------------------------------------------------------------------------- -->
+            <!--                                               Metrics                                               -->
+            <!-- --------------------------------------------------------------------------------------------------- -->
+
+            <div id="resource_section" style="display: none;">
+                <h5 style="float: left; margin-right: 10px;">Metrics</h5>
+                <select id="resource" name="resource" onchange="update_links();"
+                        style="margin-top: 7px; float: left; margin-right: 50px;">
+                    <option value="1">CPU</option>
+                    <option value="2">Memory</option>
+                    <option value="3">Disk Utilization</option>
+                    <option value="4">Disk Throughput</option>
+                    <option value="5">Disk IOPS</option>
+                    <option value="8">Disk Reallocated Sectors</option>
+                    <option value="9">Disk Power on Hours</option>
+                    <option value="10">Disk Temperature</option>
+                    <option value="6">Network Utilization</option>
+                    <option value="7">Network Throughput</option>
+                </select>
+            </div>
+
+            <!-- --------------------------------------------------------------------------------------------------- -->
+            <!--                                                Pools                                                -->
+            <!-- --------------------------------------------------------------------------------------------------- -->
+
+            {% if pools_list and pools_list|length != 0 %}
+
+            <div id="pool_section" style="display: none;">
+                <h5 style="float: left; margin-right: 10px;">Pool</h5>
+                <select id="pool" name="pool" onchange="update_links();"
+                        style="margin-top: 7px; float: left; margin-right: 50px;">
+                    <option value="all" name="all" selected>All</option>
+                    {% for key in pools_list %}
+                    <option value="{{ key }}" name="{{ key }}">{{ key }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% endif %}
+
+            <!-- --------------------------------------------------------------------------------------------------- -->
+            <!--                                             Time Range                                              -->
+            <!-- --------------------------------------------------------------------------------------------------- -->
+
+            <h5 style="float: left; margin-right: 10px;">Time Range</h5>
+            <select id="length" name="length" onchange="update_links();"
+                    style="margin-top: 7px; float: left; margin-right: 50px;">
+                <option value="60m">Last Hour</option>
+                <option value="180m">Last 3 Hours</option>
+                <option value="360m">Last 6 Hours</option>
+                <option value="720m">Last 12 Hours</option>
+                <option value="1d">Last Day</option>
+                <option value="7d">Last Week</option>
+                <option value="30d">Last Month</option>
+                <option value="1y">Last Year</option>
+            </select>
+
+
+        </div>
+    </div>
+
+    <!-- *********************************************************************************************************** -->
+    <!-- *********************************************************************************************************** -->
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-default">
+                <div class="box-body">
+                    <iframe id="frame_chart"
+                            src="" width="100%" height="250" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- *********************************************************************************************************** -->
+    <!-- *********************************************************************************************************** -->
+
+</section>
+
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{ macros.nav('','Dashboard') }}
+{% endblock %}
+
+{% block js %}
+<script src="/static/plugins/chartjs/Chart.min.js"></script>
+<script src="/static/plugins/fastclick/fastclick.min.js"></script>
+<script src="/static/plugins/knob/jquery.knob.js"></script>
+<script src="/static/plugins/flot/jquery.flot.min.js"></script>
+<script src="/static/plugins/flot/jquery.flot.resize.min.js"></script>
+<script src="/static/plugins/flot/jquery.flot.pie.min.js"></script>
+<script src="/static/plugins/flot/jquery.flot.categories.min.js"></script>
+<script src="/static/dist/js/pages/dashboard/dashboard.js?v=7777777"></script>
+
+<script>
+    var leader_url = "{{ url }}";
+    var loginUrl = "{{ url_for('main_controller.login') }}";
+    var frameUrl = leader_url + "dashboard-solo/db/ceph-overview?from=now-$&to=now&panelId=@";
+    var frameUrl_nodeUtil = leader_url + "dashboard-solo/db/node-stats?from=now-$&to=now&var-node=!&panelId=@";
+    var frameUrl_poolUtil = leader_url + "dashboard-solo/db/ceph-overview?from=now-$&to=now&panelId=@&var-pool=_";
+
+    $(document).ready(function () {
+        update_links();
+    });
+
+    function update_links() {
+        var length = $("#length").val();
+        var chart = $("#chart").val();
+
+        if (chart == 9) {
+            $("#node_section").show();
+            $("#resource_section").show();
+            $("#pool_section").hide();
+            var node_name = $("#node").val();
+            var resource = $("#resource").val();
+            var frameUrlFinal = frameUrl_nodeUtil.replace('$', length);
+            frameUrlFinal = frameUrlFinal.replace('!', node_name);
+            frameUrlFinal = frameUrlFinal.replace('@', resource);
+            $("#frame_chart").attr('src', frameUrlFinal);
+        }
+        else if (chart == 2 || chart == 3 || chart == 1) {
+            $("#node_section").hide();
+            $("#resource_section").hide();
+            $("#pool_section").show();
+            var pool_name = $("#pool").val();
+            pool_name = "pool-" + pool_name;
+            var frameUrlFinal = frameUrl_poolUtil.replace('$', length);
+            frameUrlFinal = frameUrlFinal.replace('_', pool_name);
+            frameUrlFinal = frameUrlFinal.replace('@', chart);
+            $("#frame_chart").attr('src', frameUrlFinal);
+        }
+        else {
+            $("#node_section").hide();
+            $("#resource_section").hide();
+            $("#pool_section").hide();
+            var frameUrlFinal = frameUrl.replace('$', length);
+            frameUrlFinal = frameUrlFinal.replace('@', chart);
+            $("#frame_chart").attr('src', frameUrlFinal);
+        }
+    }
+</script>
+{% endblock %}

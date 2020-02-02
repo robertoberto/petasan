@@ -1,0 +1,180 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}{% endblock %}
+{% block content %}
+<section class="content">
+
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">2</span>Step 2<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">3</span>Step 3<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">4</span>Step 4<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">5</span>Step 5<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">6</span><label style="color:#605ca8">Step 6</label><span
+                        class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+
+                <h4>Node {{node_name}} Network Settings</h4>
+
+                <form id="node_network_config" method="post"
+                      action="{{ url_for('wizard_controller.save_node_network_setting') }}">
+                    <div class="row">
+                        <div class="col-md-12">
+                            {% if flag_1 == "err" %}
+                            <div class="box">
+                                <div class="box-body">
+                                    {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+
+                                    {% if flag_2 == "backend" %}
+                                    <div class="col-md-12">
+
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label id="lblBackend1"><i class=""></i>Node Backend 1 IP:<font
+                                                        color="red">*</font></label>
+                                                <input type="text" class="form-control" data-inputmask="'alias': 'ip'"
+                                                       data-mask id="backend_ip_1" name="backend_ip_1"
+                                                       value="{{deploy_data['node_network_setting']['backend_1_ip']}}">
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label id="lblBackend2"><i class=""></i>Node Backend 2 IP:<font
+                                                        color="red">*</font></label>
+                                                <input type="text" class="form-control" data-inputmask="'alias': 'ip'"
+                                                       data-mask id="backend_ip_2" name="backend_ip_2"
+                                                       value="{{deploy_data['node_network_setting']['backend_2_ip']}}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% if flag_2 == "backend" %}
+                                <div class="box-footer">
+                                    {% if come_from == "join" %}
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_info') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                                    {% elif come_from == "tuning" %}
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_tuning') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% elif flag_1 == "success" %}
+                            <div class="box">
+                                <div class="box-body">
+                                    {% if flag_2 == "join" %}
+                                    {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                                    {% endif %}
+                                    <div class="col-md-12">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label id="lblBackend1"><i class=""></i>Node Backend 1 IP:<font
+                                                        color="red">*</font></label>
+                                                <input type="text" class="form-control" data-inputmask="'alias': 'ip'"
+                                                       data-mask id="backend_ip_1" name="backend_ip_1"
+                                                       value="{{deploy_data['node_network_setting']['backend_1_ip']}}">
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label id="lblBackend2"><i class=""></i>Node Backend 2 IP:<font
+                                                        color="red">*</font></label>
+                                                <input type="text" class="form-control" data-inputmask="'alias': 'ip'"
+                                                       data-mask id="backend_ip_2" name="backend_ip_2"
+                                                       value="{{deploy_data['node_network_setting']['backend_2_ip']}}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="box-footer">
+                                    <input type="hidden" id="validate">
+                                    {% if come_from == "join" %}
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_info') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                                    {% elif come_from == "tuning" %}
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_tuning') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section><!-- /.content -->
+{% endblock %}
+
+
+{% block js%}
+<script src="/static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script src="/static/dist/js/pages/cluster/node_network_setting.js?v=7777777"></script>
+<script>
+    function change_action(url) {
+        $('#validate').val('false');
+        $('#node_network_config').attr("action", url);
+        $("#node_network_config").submit();
+    }
+    var messages = {};
+    messages.save_node_network_setting_lbl_ip1_empty = '{{ gettext("ui_deploy_save_node_network_setting_lbl_ip1_empty") }}';
+    messages.save_node_network_setting_lbl_ip1_invalid = '{{ gettext("ui_deploy_save_node_network_setting_lbl_ip1_invalid") }}';
+    messages.save_node_network_setting_lbl_ip2_empty = '{{ gettext("ui_deploy_save_node_network_setting_lbl_ip2_empty") }}';
+    messages.save_node_network_setting_lbl_ip2_invalid = '{{ gettext("ui_deploy_save_node_network_setting_lbl_ip2_invalid") }}'
+</script>
+{% endblock %}

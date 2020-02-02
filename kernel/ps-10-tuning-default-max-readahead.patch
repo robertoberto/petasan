@@ -1,0 +1,12 @@
+diff -upr -x '*.[^ch]' a/include/linux/mm.h b/include/linux/mm.h
+--- a/include/linux/mm.h	2018-05-29 23:04:44.000000000 +0200
++++ b/include/linux/mm.h	2018-07-19 09:55:56.360035772 +0200
+@@ -2241,7 +2241,7 @@ int write_one_page(struct page *page, in
+ void task_dirty_inc(struct task_struct *tsk);
+ 
+ /* readahead.c */
+-#define VM_MAX_READAHEAD	512	/* kbytes */
++#define VM_MAX_READAHEAD	2048	/* kbytes */
+ #define VM_MIN_READAHEAD	16	/* kbytes (includes current page) */
+ 
+ int force_page_cache_readahead(struct address_space *mapping, struct file *filp,

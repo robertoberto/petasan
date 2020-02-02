@@ -1,0 +1,184 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head %}
+<!--input mask -->
+<script src="../../../static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="../../../static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="../../../static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+{% endblock %}
+{% block content %}
+<section class="content">
+
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">2</span><label style="color:#605ca8">Step
+                    2</label><span class="chevron"></span></li>
+                <li><span class="badge">3</span>Step 3<span class="chevron"></span></li>
+                <li><span class="badge">4</span>Step 4<span class="chevron"></span></li>
+                <li><span class="badge">5</span>Step 5<span class="chevron"></span></li>
+                <li><span class="badge">6</span>Step 6<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+
+                {% if flag %}
+                <h4>Replace Management Node</h4>
+                {% else %}
+                <h4>Join Cluster</h4>
+                {% endif %}
+
+                <form id="join_cluter_form" method="post"
+                      action="{{ url_for('wizard_controller.save_join_cluster') }}">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="box box-default">
+                                <div class="box-body">
+                                    {% if err == " " %}
+
+
+                                    <!-- message area -->
+
+                                    <!--/ message area -->
+                                    <div class="col-md-6">
+                                        <!-- cluster ip -->
+                                        <div class="form-group">
+                                            <label id="lblCluterIP"><i class=""></i>Management node IP to join:<font
+                                                    color="red">*</font></label>
+
+                                            <div class="input-group">
+                                                <div class="input-group-addon">
+                                                    <i class="fa fa-laptop"></i>
+                                                </div>
+                                                <input type="text"
+                                                       id="cluterIP" class="form-control"
+                                                       data-inputmask="'alias': 'ip'"
+                                                       data-mask
+                                                       name="cluterIP" value="{{ form.ip }}">
+                                            </div>
+                                        </div>
+                                        <!--cluster password -->
+
+                                        <div class="form-group">
+                                            <label id="lblPassword"><i class=""></i>Cluster Password:<font
+                                                    color="red">*</font></label>
+                                            <input class="form-control" maxlength="50" type="password"
+                                                   id="clusterPassword" autocomplete="off"
+                                                   name="clusterPassword" value="{{ form.Password }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="box-footer">
+                                    <input type="hidden" id="validate">
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_landing_page') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif (err != " " and err_num != "10") %}
+
+                        {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+
+                        <!-- message area -->
+
+                        <!--/ message area -->
+
+
+                        <div class="box-body">
+                            <!-- cluster ip -->
+                            <div class="form-group">
+                                <label id="lblCluterIP"><i class=""></i>Management node IP to join:<font
+                                        color="red">*</font></label>
+
+                                <div class="input-group">
+                                    <div class="input-group-addon">
+                                        <i class="fa fa-laptop"></i>
+                                    </div>
+                                    <input type="text"
+                                           id="cluterIP" class="form-control"
+                                           data-inputmask="'alias': 'ip'"
+                                           data-mask
+                                           name="cluterIP" value="{{ form.ip }}">
+                                </div>
+                            </div>
+                            <!--cluster password -->
+
+                            <div class="form-group">
+                                <label id="lblPassword"><i class=""></i>Cluster Password:<font
+                                        color="red">*</font></label>
+                                <input class="form-control" maxlength="50" type="password"
+                                       id="clusterPassword" autocomplete="off"
+                                       name="clusterPassword" value="{{ form.Password }}">
+                            </div>
+
+                        </div>
+
+
+                        <div class="box-footer">
+                            <input type="hidden" id="validate">
+                            <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                            <button type="submit" class="btn btn-primary pull-right margin"
+                                    onclick="change_action('{{ url_for('wizard_controller.back_to_landing_page') }}')">
+                                Previous
+                            </button>
+                            <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+                        </div>
+                        {% elif err_num =="10" %}
+                        {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+                        {% endif %}
+
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section><!-- /.content -->
+{% endblock %}
+
+
+{% block js %}
+<script src=".../../../static/dist/js/pages/cluster/join_cluster.js?v=7777777"></script>
+<script>
+    function change_action(url) {
+        $('#validate').val('false');
+        $('#join_cluter_form').attr("action", url);
+        $("#join_cluter_form").submit();
+    }
+    var messages = new Object()
+        messages.label_management_node_ip = "{{ gettext("ui_deploy_join_cluster_label_management_node_ip") }}"
+        messages.label_management_node_ip_not_valid = "{{ gettext("ui_deploy_join_cluster_label_management_node_ip_not_valid") }}"
+        messages.label_cluster_password = "{{ gettext("ui_deploy_join_cluster_label_cluser_password") }}"
+    </script>
+
+{% endblock %}

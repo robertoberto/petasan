@@ -1,0 +1,108 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}{% endblock %}
+{% block content %}
+<section class="content">
+
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div id="wizard" class="wizard-inner">
+            <ul class="steps">
+                <li class="active"><span class="badge bg-light-blue">1</span><label style="color:#605ca8">Step 1</label><span
+                        class="chevron"></span></li>
+                <li><span class="badge">2</span>Step 2<span class="chevron"></span></li>
+                <li><span class="badge">3</span>Step 3<span class="chevron"></span></li>
+                <li><span class="badge">4</span>Step 4<span class="chevron"></span></li>
+                <li><span class="badge">5</span>Step 5<span class="chevron"></span></li>
+                <li><span class="badge">6</span>Step 6<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+
+                <h4 id="wizardValue">Wizard Start</h4>
+
+                <form id="option_form" method="post" action="{{ url_for('wizard_controller.save_landing_page') }}">
+                    <div class="row">
+
+                        <div class="col-md-12">
+                            <div class="box ">
+                                <div class="box-body">
+                                    {% if status != None %}
+                                    <div class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+                                        </button>
+
+                                        <h5><i class="icon fa fa-check"></i>{{gettext(status)}} </h5>
+                                        {% endif %}
+                                    </div>
+                                    {% if state == '20' %}
+                                    <div>Use any of the following Cluster Management URLs to manage your cluster:</div>
+                                    {% if management_urls != "" %}
+                                    {% for url in management_urls %}
+                                    <div style="padding-left: 15px"><a href="{{url}}">{{url}}</a></div>
+                                    {% endfor %}
+                                    {% endif %}
+
+                                    {% elif state == '10' %}
+                                    <div class="box-body">
+                                        <input type="radio"
+
+                                               checked="checked"
+                                               value="create" name="option" id="option1" class="minimal"><label
+                                            style="padding-left:5px;" for="option1">Create New Cluster</label><br/>
+                                        <input type="radio"
+                                               {% if deploy_data['landing_page']['option'] == "join_cluster" %}
+                                        checked="checked"
+                                        {% endif %}
+                                        value="join" name="option" id="option2" class="minimal"><label
+                                            style="padding-left:5px;" for="option2">Join Existing Cluster</label><br/>
+
+                                        <input type="radio"
+                                               {% if deploy_data['landing_page']['option'] == "replace_node" %}
+                                        checked="checked"
+                                        {% endif %}
+                                        value="replace" name="option" id="option3" class="minimal"><label
+                                            style="padding-left:5px;" for="option3">Replace Management Node</label><br/>
+                                    </div>
+
+                                    <div class="box-footer">
+                                        <button type="submit" class="btn btn-primary pull-right">Next</button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- /.content -->
+{% endblock %}
+{% block js%}
+<script>
+    var url = '{{ management_urls }}'
+    if (url != "") {
+        $("#wizard").css("display", "none");
+        $("#wizardValue").text("Wizard Finished");
+    }
+</script>
+{% endblock %}

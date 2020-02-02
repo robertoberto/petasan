@@ -1,0 +1,8 @@
+[Unit]
+Description= PetaSAN File Sync Service
+
+[Service]
+Type=simple
+ExecStart=/opt/petasan/services/files_sync.py
+Restart=always
+RestartSec=3

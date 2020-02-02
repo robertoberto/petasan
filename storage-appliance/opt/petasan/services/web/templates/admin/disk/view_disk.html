@@ -1,0 +1,129 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+<!-- Modal -->
+
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+
+        <!-- Modal Header -->
+        <!-- ============ -->
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true"> X </span>
+            </button>
+            <h4 class="modal-title">iSCSI Disk Information</h4>
+        </div>
+
+        <!--  Modal Body  -->
+        <!-- ============ -->
+        <div class="modal-body">
+            <div class="box-body">
+
+                <div id="img_loading" style="display: block; align-content: center; text-align: center;" >
+
+                    <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+                    <p id="loading" name='loading' class="text-muted">
+                        <h3 class="box-title">Loading</h3>
+                    </p>
+
+                </div>
+
+                <div id="diskInfoArea" style="display: none">
+                    <div class="col-sm-6" >
+
+                    <div class="" id="disk_info_id">
+                        <label> Disk ID: </label>
+                        <p id='disk_id'></p>
+                    </div>
+                        <div id="disk_info_Name">
+                        <label> Disk Name: </label>
+                        <p id='disk_name'></p>
+                    </div>
+                    <div id="disk_info_size">
+                        <label> Disk Size: </label>
+                        <p id='disk_size'></p>
+                    </div>
+                    <div id="disk_info_created">
+                        <label> Created: </label>
+                        <p id='disk_created'></p>
+                    </div>
+                    <div id="disk_info_pool_type">
+                        <label> Pool Type: </label>
+                        <p id='disk_pool_type'></p>
+                    </div>
+                    <div id="disk_info_pool">
+                        <label> Pool: </label>
+                        <p id='disk_pool'></p><p id='disk_data_pool'></p>
+                    </div>
+                    <div id="disk_info_iqn">
+                        <label> IQN: </label>
+                        <p id='disk_iqn'></p>
+                    </div>
+                   <div id="iscsi1" hidden>
+                        <label>iSCSI Subnet 1:<i class=""></i></label>
+                   </div>
+                   <div id="iscsi2" hidden>
+                        <label>iSCSI Subnet 2:<i class=""></i></label>
+                   </div>
+
+
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group" id="password_auth">
+                                <label id="lblAuth"><i class=""></i>Password Authentication:</label>
+                                <p id="password_status"></p>
+                        </div>
+
+                                <div class="form-group" id="auth_yes" hidden>
+                                <label class="control-label" id="lblUserName">User Name:</label>
+                                <p id="username"></p>
+                                </div>
+
+                                <div class="form-group">
+                                <label id="lblACL"><i class=""></i> Client ACL:</label><p id="acl_status"></p>
+                                </div>
+
+
+
+                                <div class="form-group" id="iqns_section" hidden>
+                                    <label><i class=""></i> IQN(s)</label>
+                                </div>
+                        <div class="form-group" id="enable_replication">
+                                <label id="lblReplica"><i class=""></i>Enable Replication:</label>
+                                <p id="replica_status"></p>
+                        </div>
+
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal -->

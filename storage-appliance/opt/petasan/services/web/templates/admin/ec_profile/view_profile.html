@@ -1,0 +1,107 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+<!-- Modal -->
+
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+
+        <!-- Modal Header -->
+        <!-- ============ -->
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true"> X </span>
+            </button>
+            <h4 class="modal-title">EC Profile Information</h4>
+        </div>
+
+        <!--  Modal Body  -->
+        <!-- ============ -->
+        <div class="modal-body">
+            <div class="box-body">
+
+                <div id="img" style="display: block; align-content: center; text-align: center;" >
+
+                    <img src="/static/dist/img/credit/loading.gif" style="height: 50px; width: 50px;">
+                    <p id="loading" name='loading' class="text-muted">
+                        <h3 class="box-title">Loading</h3>
+                    </p>
+
+                </div>
+
+                <div id="profileInfoArea" style="display: none">
+
+                    <div id="profile_info_Name">
+                        <label> Profile Name: </label>
+                        <p id='profile_name_val'></p>
+                    </div>
+
+                    <div id="profileInfo_k" hidden>
+                        <label> K: </label>
+                        <p id='k_val'></p>
+                    </div>
+
+                    <div id="profileInfo_m" hidden>
+                        <label> M: </label>
+                        <p id='m_val'></p>
+                    </div>
+
+                    <div id="profileInfo_plugin" hidden>
+                        <label> Plugin: </label>
+                        <p id='plugin_val'></p>
+                    </div>
+
+                    <div id="profileInfo_locality" hidden>
+                        <label> Locality: </label>
+                        <p id='locality_val'></p>
+                    </div>
+
+                    <div id="profileInfo_durability_estimator" hidden>
+                        <label> durability_estimator: </label>
+                        <p id='durability_estimator_val'></p>
+                    </div>
+
+                    <div id="profileInfo_packet_size" hidden>
+                        <label> packet_size: </label>
+                        <p id='packet_size_val'></p>
+                    </div>
+
+                    <div id="profileInfo_strip_unit" hidden>
+                        <label> strip_unit: </label>
+                        <p id='strip_unit_val'></p>
+                    </div>
+
+                    <div id="profileInfo_technique" hidden>
+                        <label> Technique: </label>
+                        <p id='technique_val'></p>
+                    </div>
+
+
+
+                </div>
+                <!-- *********************************** -->
+
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal -->

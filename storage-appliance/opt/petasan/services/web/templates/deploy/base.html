@@ -1,0 +1,143 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% import 'deploy/macros.html' as macros %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      {% block title%}<title>PetaSAN</title>{% endblock %}
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Bootstrap 3.3.5 -->
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/static/bootstrap/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="/static/dist/css/AdminLTE.min.css">
+
+
+    <link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+      <link rel="stylesheet" href="/static/dist/css/custom.css">
+
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="/static/bootstrap/js/html5shiv.min.js"></script>
+      <script src="/static/bootstrap/js/respond.min.js"></script>
+        <![endif]-->
+        <!-- jQuery 2.1.4 -->
+    <script src="/static/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+    <!-- Bootstrap 3.3.5 -->
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <!-- SlimScroll -->
+    <script src="/static/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+    <!-- FastClick -->
+    <script src="/static/plugins/fastclick/fastclick.min.js"></script>
+ <script src="/static/plugins/select2/select2.full.min.js"></script>
+    <!-- InputMask -->
+
+<script src="/static/dist/js/app.min.js"></script>
+      {% block head%}{% endblock %}
+
+
+  </head>
+  <body class="skin-purple sidebar-mini  layout-top-nav">
+    <!-- Site wrapper -->
+    <div class="wrapper">
+
+      <header class="main-header">
+        <!-- Logo -->
+
+          <!-- mini logo for sidebar mini 50x50 pixels -->
+<nav class="navbar navbar-static-top">
+          <div class="container">
+            <div class="navbar-header">
+{#              <a href="#" class="navbar-brand"><b>Peta</b>SAN</a>#}
+                <a href="#" class="navbar-brand">
+                <img src="../../static/dist/img/credit/PetaSAN-rev-128x31.png"></a>
+
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <!-- /.navbar-collapse -->
+            <!-- Navbar Right Menu -->
+              <!-- /.navbar-custom-menu -->
+          </div><!-- /.container-fluid -->
+        </nav>
+      </header>
+
+      <!-- =============================================== -->
+
+      <!-- Left side column. contains the sidebar -->
+
+
+      <!-- =============================================== -->
+
+      <!-- Content Wrapper. Contains page content -->
+      <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+
+
+        <!-- Main content -->
+
+      {% block content %}{% endblock %}
+
+      </div><!-- /.content-wrapper -->
+
+      <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+          <b>Version 2.4.0</b>
+        </div>
+        <strong>Copyright 2019 PetaSAN </strong> www.petasan.org All rights reserved.
+      </footer>
+
+      <div class="control-sidebar-bg"></div>
+    </div><!-- ./wrapper -->
+
+
+    {% block js%}{% endblock %}
+
+
+  </body>
+</html>
+
+<!--AdminLTE-2.3.0
+The MIT License (MIT)
+
+Copyright (c) 2014-2015 almasaeed2010
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ -->

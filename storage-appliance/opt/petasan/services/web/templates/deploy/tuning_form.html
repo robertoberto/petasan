@@ -1,0 +1,279 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}{% endblock %}
+{% block content %}
+<section class="content">
+    <div id="myWizard" class="wizard">
+        {# ============================================= Steps Bar ============================================= #}
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">2</span>Step 2<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">3</span>Step 3<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">4</span>Step 4<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">5</span><label style="color:#605ca8">Step 5</label><span
+                        class="chevron"></span></li>
+                <li><span class="badge">6</span>Step 6<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        {# ========================================================================================================= #}
+
+
+        {# =========================================== Step Content ============================================ #}
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+                <h4>Cluster Tuning</h4>
+
+                {% if success %}
+                <form id="tuning_config" method="post"
+                      action="{{ url_for('wizard_controller.save_cluster_tuning_template') }}">
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="box box-default">
+                                <div class="box-header"><h3 class="box-title">Default Pool Settings</h3></div>
+                                <div class="box-body">
+
+                                    <!-- Warning - of FileStore option -->
+                                    <!-- ============================= -->
+                                    <div style="display: none;" id="replicas_no_alert">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-warning alert-dismissable">
+                                                    <button type="button" class="close"
+                                                            onclick="$('#replicas_no_alert').hide();" aria-hidden="true">×
+                                                    </button>
+                                                    <h4><i class="icon fa fa-warning"></i> Warning!</h4>
+                                                    <span id="test_message">
+                                                        {{ gettext("ui_deploy_replicas_no_alert_msg") }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End of Warning - of FileStore option -->
+                                    <!-- ==================================== -->
+
+
+                                    {# ============================== Cluster Size ============================== #}
+                                    <div class="col-md-12" style="padding-left: 0px; padding-bottom: 15px;">
+                                        <div class="col-md-4">
+                                            <div class="form-group" style="margin-bottom: 0px">
+                                                <label id="lblClusterSize"><i class=""></i>Cluster Size:<font
+                                                        color="red">*</font></label>
+                                                <select class="form-control" id="cluster_size" name="cluster_size">
+                                                    <option value="0"></option>
+                                                    <option value="256" {% if deploy_data[
+                                                    'cluster_tuning']['cluster_size'] == "256" %}selected{%endif%} >3 to
+                                                    15 disks</option>
+                                                    <option value="1024" {% if deploy_data[
+                                                    'cluster_tuning']['cluster_size'] == "1024" %}selected{%endif%}>15
+                                                    to 50 disks</option>
+                                                    <option value="4096" {% if deploy_data[
+                                                    'cluster_tuning']['cluster_size'] == "4096" %}selected{%endif%}>50
+                                                    to 200 disks</option>
+                                                    <option value="8192" {% if deploy_data[
+                                                    'cluster_tuning']['cluster_size'] == "8192" %}selected{%endif%}>More
+                                                    than 200 disks</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                        </div>
+                                    </div>
+                                    {# ============================================================================== #}
+
+                                    {# =========================== Number of Replicas =========================== #}
+                                    <div class="col-md-12" style="padding-left: 0px; padding-bottom: 15px;">
+                                        <div class="col-md-4">
+                                            <div class="form-group" style="margin-bottom: 0px">
+                                                <label id="lblreplicas"><i class=""></i>Number of Replicas:<font
+                                                        color="red">*</font></label>
+                                                <select class="form-control" id="replicas_no" name="replicas_no">
+                                                    <option value="2" {% if deploy_data[
+                                                    'cluster_tuning']['replicas_no'] == "2"
+                                                    %}selected{%endif%}>2</option>
+                                                    <option value="3" {% if deploy_data[
+                                                    'cluster_tuning']['replicas_no'] != "2"
+                                                    %}selected{%endif%}>3</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                        </div>
+                                    </div>
+                                    {# ============================================================================== #}
+
+                                    {# ============================= Storage Engine ============================= #}
+                                    <div class="col-md-12" style="padding-left: 0px; padding-bottom: 15px;">
+                                        <div class="col-md-4">
+                                            <div class="form-group" style="margin-bottom: 0px">
+                                                <label id="lblengine"><i class=""></i>Storage Engine:<font
+                                                        color="red">*</font><i data-toggle="tooltip"
+                                                       title='{{ gettext("ui_deploy_filestore_alert_msg") }}'
+                                                       class="fa fa-fw fa-info-circle"></i></label>
+                                                <select class="form-control" id="storage_engine" name="storage_engine">
+                                                    <option value="bluestore" {% if deploy_data[
+                                                    'cluster_tuning']['storage_engine'] != "filestore"
+                                                    %}selected{%endif%}>BlueStore</option>
+                                                    <option value="filestore" {% if deploy_data[
+                                                    'cluster_tuning']['storage_engine'] == "filestore"
+                                                    %}selected{%endif%}>FileStore</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                        </div>
+                                    </div>
+                                    {# ============================================================================== #}
+
+                                    {# ============================= Tuning Template ============================ #}
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="tuning_template" id="lbl_tuning_template"><i class=""></i>Tuning
+                                                Template:<font
+                                                        color="red">*</font></label>
+                                            <select size="5" class="form-control" id="tuning_template"
+                                                    name="tuning_template">
+                                                <option value="Default" {% if deploy_data[
+                                                'cluster_tuning']['tuning_template'] == "Default" %}selected{%endif%}
+                                                selected >Default</option>
+                                                {% for template in templates %}
+                                                {% if template != "Default" %}
+                                                <option value="{{template}}" {% if deploy_data[
+                                                'cluster_tuning']['tuning_template'] == template.title()
+                                                %}selected{%endif%}>{{template.title()}}</option>
+                                                {% endif %}
+                                                {% endfor %}
+                                                <option value="custom" {% if deploy_data[
+                                                'cluster_tuning']['tuning_template'] == "custom"
+                                                %}selected{%endif%}>Custom</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {# ============================================================================== #}
+                                </div>
+
+
+                                {# ******************************** Show Details ******************************** #}
+                                <div class="box box-default" id="test"
+                                     style="width: 95%; margin-left: 26px; margin-right: 26px; border: none; box-shadow: none;">
+                                    <div class="box-header with-border" style="border: none;">
+                                        <div class="box-tools pull-right" style="right: 0px; left: -7px; top: 6px;">
+                                            <button type="button" class="btn btn-box-tool btn_collapse"><i
+                                                    id="mark" class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <h3 class="box-title" id="box_details_title"
+                                            style="font-weight: 700; font-size: 14px;">Show Details</h3>
+                                    </div>
+
+                                    <div id="demo" class="box-body collapse">
+                                        <div class="form-group">
+                                            <label>Ceph Configuration:</label>
+                                            <textarea name="ceph_script" id="ceph_script" class="form-control" rows="10"
+                                                      placeholder="Enter ...">{{deploy_data['cluster_tuning']['ceph_script']}}</textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>LIO Overrides:</label>
+                                            <textarea name="lio_script" id="lio_script" class="form-control" rows="10"
+                                                      placeholder="Enter ...">{{deploy_data['cluster_tuning']['lio_config']}}</textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Post-Deployment Script:</label>
+                                            <textarea name='post_deploy_script' id="post_deploy_script"
+                                                      class="form-control" rows="10"
+                                                      placeholder="Enter ...">{{deploy_data['cluster_tuning']['post_script_config']}}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                {# ********************************************************************************** #}
+
+                                <div class="box-footer">
+                                    <input type="hidden" id="validate">
+                                    <input id="do_ajax" type="hidden"
+                                           value="{{deploy_data['cluster_tuning']['tuning_template']}}">
+                                    <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_network_setting') }}')">
+                                        Previous
+                                    </button>
+                                    <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                {% elif err %}
+                <div class="box  box-default">
+                    <div class="box-body">
+                        {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+        {# ========================================================================================================= #}
+
+    </div>
+</section>
+{% endblock %}
+
+
+{% block js%}
+<!--input mask -->
+<script src="/static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script src="/static/dist/js/pages/cluster/tuning_form.js?v=7777777"></script>
+
+<script>
+    var messages = {};
+    messages.save_tuning_setting_lbl_cluster_size_empty = '{{ gettext("ui_deploy_save_tuning_setting_lbl_cluster_size_empty") }}';
+</script>
+
+
+<script>
+    $(document).ready(function () {
+        $('#replicas_no').on('change', function () {
+            if (this.value == '2') {
+                $("#replicas_no_alert").show();
+            }
+            else {
+                $("#replicas_no_alert").hide();
+            }
+        });
+    });
+
+    function change_action(url) {
+
+        $('#validate').val('false');
+        $('#tuning_config').attr("action", url);
+        $("#tuning_config").submit();
+    }
+</script>
+
+{% endblock %}

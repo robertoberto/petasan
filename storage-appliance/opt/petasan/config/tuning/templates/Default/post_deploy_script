@@ -1,0 +1,132 @@
+#! /bin/bash
+
+cat << EOF  >  /etc/udev/rules.d/90-petasan-disk.rules
+
+# ------ NVME ---------
+#ACTION=="add|change", KERNEL=="nvme*[0-9]n*[0-9]", ATTR{queue/read_ahead_kb}="16"
+ACTION=="add|change", KERNEL=="nvme*", ENV{DEVTYPE}=="disk", ATTR{queue/read_ahead_kb}="16"
+ACTION=="add|change", KERNEL=="nvme*", ENV{DEVTYPE}=="disk", ATTR{queue/nr_requests}="1024"
+#ACTION=="add|change", KERNEL=="nvme*", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="noop"
+
+# ------ SSDs ---------
+ACTION=="add|change", KERNEL=="sd[a-z]|xvd[a-z]",ENV{DEVTYPE}=="disk",ATTR{queue/rotational}=="0", ATTR{queue/read_ahead_kb}="32"
+ACTION=="add|change", KERNEL=="sd[a-z]|xvd[a-z]",ENV{DEVTYPE}=="disk",ATTR{queue/rotational}=="0", ATTR{queue/nr_requests}="1024"
+ACTION=="add|change", KERNEL=="sd[a-z]|xvd[a-z]",ENV{DEVTYPE}=="disk",ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="noop"
+
+
+# ------ Spinning ---------
+ACTION=="add|change", KERNEL=="sd[a-z]|xvd[a-z]",ENV{DEVTYPE}=="disk",ATTR{queue/rotational}=="1", ATTR{queue/read_ahead_kb}="1024"
+ACTION=="add|change", KERNEL=="sd[a-z]|xvd[a-z]",ENV{DEVTYPE}=="disk",ATTR{queue/rotational}=="1", ATTR{queue/nr_requests}="1024"
+# use CFQ scheduler to set priorities on client and recovery I/O threads
+ACTION=="add|change", KERNEL=="sd[a-z]|xvd[a-z]",ENV{DEVTYPE}=="disk",ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="cfq"
+
+EOF
+
+for d in $(find /sys/block/* | grep -E '\/nvme' ) ; do
+  # ------ NVME ---------
+  echo 16 > $d/queue/read_ahead_kb
+  echo 1024 > $d/queue/nr_requests
+  #echo "noop" > $d/queue/scheduler
+done
+
+for d in $(find /sys/block/* | grep -E '\/(sd|xvd)' ) ; do
+  SPINNING=$(head -n 1 $d/queue/rotational)
+  if [ "$SPINNING" -eq "0" ]
+  then
+    # ------ SSD ---------
+    echo 32 > $d/queue/read_ahead_kb
+    echo 1024 > $d/queue/nr_requests
+    echo "noop" > $d/queue/scheduler
+  else
+    # ------ Spinning ---------
+    echo 1024 > $d/queue/read_ahead_kb
+    echo 1024 > $d/queue/nr_requests
+    echo "cfq"  > $d/queue/scheduler
+  fi
+done
+
+# disable write caching for all disks
+#cat << EOF  >  /etc/udev/rules.d/91-petasan-volatile-memory-cache.rules
+#
+## set drive write-caching flag (0) for hdd and ssd devices
+#ACTION=="add|change", KERNEL=="sd[a-z]",ENV{DEVTYPE}=="disk", RUN+="/sbin/hdparm -W 0 /dev/%k"
+## set drive write-caching flag (0) for nvme devices
+## ACTION=="add|change", KERNEL=="nvme*",ENV{DEVTYPE}=="disk", RUN+="/usr/sbin/nvme set-feature /dev/%k -f 0x6 -v 1"
+#EOF
+#
+#for DEVICE_PATH in $(find /sys/block/* | grep -E '\/(sd)'  )
+#do
+#  DEVICE=${DEVICE_PATH##*/}
+#  /sbin/hdparm -W 0 /dev/$DEVICE > /dev/null 2>&1
+#done
+
+#for DEVICE_PATH in $(find /sys/block/* | grep -E '\/(nvme)'  )
+#do
+#  DEVICE=${DEVICE_PATH##*/}
+#  nvme set-feature /dev/$DEVICE -f 0x6 -v 1 > /dev/null 2>&1
+#done
+
+cat << EOF  >  /etc/sysctl.conf
+kernel.pid_max=4194303
+fs.file-max=26234859
+#vm.swappiness=1
+#vm.vfs_cache_pressure=1
+#vm.min_free_kbytes = 4194304
+#vm.zone_reclaim_mode=1
+net.core.rmem_max=268435456
+net.core.wmem_max=268435456
+net.core.rmem_default=67108864
+net.core.wmem_default=67108864
+net.core.optmem_max=134217728
+net.ipv4.tcp_rmem=67108864 134217728 268435456
+net.ipv4.tcp_wmem=67108864 134217728 268435456
+net.core.netdev_budget=1200
+net.ipv4.tcp_low_latency=1
+net.ipv4.tcp_adv_win_scale=1
+net.ipv4.tcp_mtu_probing=1
+net.core.somaxconn=65535
+net.core.netdev_max_backlog=250000
+net.ipv4.tcp_max_syn_backlog=30000
+net.ipv4.tcp_max_tw_buckets=2000000
+net.ipv4.tcp_tw_reuse=1
+net.ipv4.tcp_tw_recycle=1
+net.ipv4.tcp_fin_timeout=5
+net.ipv4.tcp_slow_start_after_idle=0
+net.ipv4.udp_rmem_min=8192
+net.ipv4.udp_wmem_min=8192
+net.ipv4.conf.all.send_redirects=0
+net.ipv4.conf.all.accept_redirects=0
+net.ipv4.conf.all.accept_source_route=0
+# mtu discovery
+net.ipv4.tcp_mtu_probing=2
+#net.ipv4.ip_no_pmtu_disc=1
+# required for move path
+net.ipv4.conf.all.promote_secondaries=1
+EOF
+
+sysctl --system
+
+
+# --- cpu states ----------
+if [ -f  /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]; then
+  sleep 5
+  echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+fi
+if [ -f  /sys/devices/system/cpu/intel_pstate/min_perf_pct ]; then
+  sleep 5
+  echo 100 > /sys/devices/system/cpu/intel_pstate/min_perf_pct
+fi
+
+cat << EOF   >  /etc/rc.local
+#!/bin/sh -e
+if [ -f  /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]; then
+  sleep 5
+  echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+fi
+if [ -f  /sys/devices/system/cpu/intel_pstate/min_perf_pct ]; then
+  sleep 5
+  echo 100 > /sys/devices/system/cpu/intel_pstate/min_perf_pct
+fi
+exit 0
+EOF
+chown root /etc/rc.local

@@ -1,0 +1,394 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "deploy/base.html" %}
+
+{% block head%}{% endblock %}
+{% block content %}
+<section class="content">
+
+    <!-- Default box -->
+    <div id="myWizard" class="wizard">
+        <div class="wizard-inner">
+            <ul class="steps">
+                <li class="complete"><span class="badge bg-green">1</span>Step 1<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">2</span>Step 2<span class="chevron"></span></li>
+                <li class="complete"><span class="badge bg-green">3</span>Step 3<span class="chevron"></span></li>
+                <li class="active"><span class="badge bg-light-blue">4</span><label style="color:#605ca8">Step 4</label><span
+                        class="chevron"></span></li>
+                <li><span class="badge">5</span>Step 5<span class="chevron"></span></li>
+                <li><span class="badge">6</span>Step 6<span class="chevron"></span></li>
+                <li><span class="badge">7</span>Step 7<span class="chevron"></span></li>
+                <li><span class="badge">8</span>Step 8<span class="chevron"></span></li>
+            </ul>
+        </div>
+        <div class="step-content">
+            <div class="step-pane active" id="step1">
+
+                <h4>Cluster Network Settings</h4>
+
+                <form id="cluster_network_config" method="post"
+                      action="{{ url_for('wizard_controller.save_cluster_network_setting') }}">
+                    <div class="row">
+
+                        <div class="col-md-12">
+                            {% if flag == "success" %}
+                            <div class="box  box-default">
+                                <div class="box-body">
+
+                                    <!-- --------------------------------------------------------------------------- -->
+                                    <div class="col-md-3">
+
+                                        <label><i class=""></i>Management Interface:</label>
+                                        <select class="form-control" name="management_network" disabled>
+                                            {% for eth in eths %}
+                                            {% if (eth.is_management == true) %}
+                                            <option>{{ eth.name }}</option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select><br/>
+
+                                        <div class="form-group">
+                                            <label id="lblIscsi1"><i class=""></i>iSCSI 1 Interface:<font
+                                                    color="red">*</font></label>
+                                            <select class="form-control" id="iscsi_1_eth_name" name="iscsi_1_eth_name">
+                                                <option value="0" selected>-----</option>
+                                                {% for eth in eths %}
+                                                <option value="{{eth.name}}" {% if eth.name== deploy_data[
+                                                'cluster_network_sittings']['iscsi_1_eth_name'] %} selected {%endif%}>{{
+                                                eth.name }}</option>
+                                                {% endfor %}
+                                            </select><br/>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label id="lblIscsi2"><i class=""></i>iSCSI 2 Interface:<font
+                                                    color="red">*</font></label>
+                                            <select class="form-control" id="iscsi_2_eth_name" name="iscsi_2_eth_name">
+                                                <option value="0" selected>-----</option>
+                                                {% for eth in eths %}
+                                                <option value="{{eth.name}}" {% if eth.name== deploy_data[
+                                                'cluster_network_sittings']['iscsi_2_eth_name'] %} selected {%endif%}>{{
+                                                eth.name }}</option>
+                                                {% endfor %}
+                                            </select><br/>
+                                        </div>
+
+                                    </div>
+                                    <!-- --------------------------------------------------------------------------- -->
+
+                                    <!-- --------------------------------------------------------------------------- -->
+                                    <div class="form-group" style="margin-bottom: 0px">
+                                        <div class="col-md-3" style="padding-left: 0px;">
+                                            <label id=""><i class=""></i>Subnet Base IP:</label>
+
+                                            <div class="input-group">
+                                                <div class="input-group-addon">
+                                                    <i class="fa fa-laptop"></i>
+                                                </div>
+                                                <input type="text" class="form-control" data-inputmask="'alias': 'ip'"
+                                                       data-mask id="" name="" value="{{ management_base_ip }}"
+                                                       disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- --------------------------------------------------------------------------- -->
+
+                                    <!-- --------------------------------------------------------------------------- -->
+                                    <div class="form-group" style="margin-bottom: 0px">
+                                        <div class="col-md-3" style="padding-left: 0px;">
+                                            <label id=""><i class=""></i>Subnet Mask:</label>
+
+                                            <div class="input-group">
+                                                <div class="input-group-addon">
+                                                    <i class="fa fa-laptop"></i>
+                                                </div>
+                                                <input type="text" class="form-control" data-inputmask="'alias': 'ip'"
+                                                       data-mask id="" name="" value="{{ management_netmask }}"
+                                                       disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- --------------------------------------------------------------------------- -->
+
+                                    <!-- --------------------------------------------------------------------------- -->
+                                    <div class="form-check">
+                                        <div class="col-md-2" style="text-align: center;">
+                                            <input type="checkbox" style="margin: 30px 0 0; vertical-align: -100%" {% if
+                                                   management_vlan_id|length> 0 %} checked {% endif %} id=""
+                                            class="form-check-input" disabled>
+                                            <label class="form-check-label"
+                                                   style="font-weight: bold; vertical-align: -70%"> VLAN Tagging</label>
+                                        </div>
+                                    </div>
+                                    <!-- --------------------------------------------------------------------------- -->
+
+                                    <!-- --------------------------------------------------------------------------- -->
+                                    <div class="form-group" id="" {% if management_vlan_id|length== 0 %} hidden {% endif
+                                         %}>
+                                        <div class="col-md-1">
+                                            <label id=""><i class=""></i>VLAN Id:</label>
+
+                                            <div class="input-group" style="width: 100%;">
+
+                                                <input type="text" class="form-control" value="{{ management_vlan_id }}"
+                                                       disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- --------------------------------------------------------------------------- -->
+
+                                    <!-- --------------------------------------------------------------------------- -->
+                                    <div class="col-md-12">
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-3" style="padding-left: 0px;">
+                                                <label id="lblBackend1"><i class=""></i>Backend 1 Interface:<font
+                                                        color="red">*</font></label>
+                                                <select class="form-control" id="backend_1_eth_name"
+                                                        name="backend_1_eth_name">
+                                                    <option value="0" selected>-----</option>
+                                                    {% for eth in eths %}
+                                                    <option value="{{eth.name}}" {% if eth.name== deploy_data[
+                                                    'cluster_network_sittings']['backend_1_eth_name'] %} selected
+                                                    {%endif%} >{{ eth.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-3" style="padding-left: 0px;">
+                                                <label id="lblBaseIP1"><i class=""></i>Subnet Base IP:<font color="red">*</font><i data-toggle="tooltip"
+                                                       title='{{ gettext("ui_deploy_cluster_interface_base_ip") }}'
+                                                       class="fa fa-fw fa-info-circle"></i></label>
+
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">
+                                                        <i class="fa fa-laptop"></i>
+                                                    </div>
+                                                    <input type="text" class="form-control"
+                                                           data-inputmask="'alias': 'ip'"
+                                                           data-mask id="backend_1_base_ip" name="backend_1_base_ip"
+                                                           value="{{deploy_data['cluster_network_sittings']['backend_1_base_ip']}}">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0px">
+                                            <div class="col-md-3" style="padding-left: 0px;">
+                                                <label id="lblSubnet1"><i class=""></i>Subnet Mask:<font
+                                                        color="red">*</font></label>
+
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">
+                                                        <i class="fa fa-laptop"></i>
+                                                    </div>
+                                                    <input type="text" class="form-control"
+                                                           data-inputmask="'alias': 'ip'"
+                                                           data-mask id="backend_1_mask" name="backend_1_mask"
+                                                           value="{{deploy_data['cluster_network_sittings']['backend_1_mask']}}">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <div class="col-md-2" style="text-align: center;">
+                                                <input type="checkbox" style="margin: 32px 0 0; vertical-align: -100%"
+                                                       onchange="toggleCheckbox(this , 'vlan_id_1')"
+                                                       name="vlan_tagging_backend1" id="vlan_tagging_backend1"
+                                                       class="form-check-input" {%if deploy_data['cluster_network_sittings']['vlan_tagging_backend1']%}
+                                                checked{%endif%}>
+                                                <label class="form-check-label"
+                                                       style="font-weight: bold; vertical-align: -70%"> VLAN
+                                                    Tagging</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" id="vlan_id_1" {%if not deploy_data[
+                                        'cluster_network_sittings']['vlan_tagging_backend1']%} hidden{%endif%}>
+                                        <div class="col-md-1">
+                                            <label id="vlan_id_backend1_label"><i class=""></i>VLAN Id:<font
+                                                    color="red">*</font></label>
+
+                                            <div class="input-group" style="width: 100%;">
+
+                                                <input type="text" class="form-control" name="vlan_id_backend1"
+                                                       id="vlan_id_backend1"
+                                                       value="{{deploy_data['cluster_network_sittings']['vlan_id_backend1']}}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- --------------------------------------------------------------------------- -->
+
+
+                                <br/>
+
+                                <div class="col-md-12">
+                                    &nbsp;
+                                </div>
+
+
+                                <!-- --------------------------------------------------------------------------- -->
+                                <div class="col-md-12">
+                                    <div class="form-group" style="margin-bottom: 0px">
+                                        <div class="col-md-3" style="padding-left: 0px;">
+                                            <label id="lblBackend2"><i class=""></i>Backend 2 Interface:<font
+                                                    color="red">*</font></label>
+                                            <select class="form-control" id="backend_2_eth_name"
+                                                    name="backend_2_eth_name">
+                                                <option value="0" selected>-----</option>
+                                                {% for eth in eths %}
+                                                <option value="{{eth.name}}" {% if eth.name== deploy_data[
+                                                'cluster_network_sittings']['backend_2_eth_name'] %} selected
+                                                {%endif%}>{{ eth.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0px">
+                                        <div class="col-md-3" style="padding-left: 0px;">
+                                            <label id="lblBaseIP2"><i class=""></i>Subnet Base IP:<font
+                                                    color="red">*</font></label>
+
+                                            <div class="input-group">
+                                                <div class="input-group-addon">
+                                                    <i class="fa fa-laptop"></i>
+                                                </div>
+                                                <input type="text" class="form-control"
+                                                       data-inputmask="'alias': 'ip'"
+                                                       data-mask id="backend_2_base_ip" name="backend_2_base_ip"
+                                                       value="{{deploy_data['cluster_network_sittings']['backend_2_base_ip']}}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0px">
+                                        <div class="col-md-3" style="padding-left: 0px;">
+                                            <label id="lblSubnet2"><i class=""></i>Subnet Mask:<font
+                                                    color="red">*</font></label>
+
+                                            <div class="input-group">
+                                                <div class="input-group-addon">
+                                                    <i class="fa fa-laptop"></i>
+                                                </div>
+                                                <input type="text" class="form-control"
+                                                       data-inputmask="'alias': 'ip'"
+                                                       data-mask id="backend_2_mask" name="backend_2_mask"
+                                                       value="{{deploy_data['cluster_network_sittings']['backend_2_mask']}}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <div class="col-md-2" style="text-align: center;">
+                                            <input type="checkbox" style="margin: 32px 0 0; vertical-align: -100%"
+                                                   onchange="toggleCheckbox(this , 'vlan_id_2')"
+                                                   name="vlan_tagging_backend2" id="vlan_tagging_backend2"
+                                                   class="form-check-input" {%if deploy_data['cluster_network_sittings']['vlan_tagging_backend2']%}
+                                            checked{%endif%}>
+                                            <label class="form-check-label"
+                                                   style="font-weight: bold; vertical-align: -70%"> VLAN Tagging</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group" id="vlan_id_2" {%if not deploy_data[
+                                    'cluster_network_sittings']['vlan_tagging_backend2']%} hidden{%endif%}>
+                                    <div class="col-md-1">
+                                        <label id="vlan_id_backend2_label"><i class=""></i>VLAN Id:<font
+                                                color="red">*</font></label>
+
+                                        <div class="input-group" style="width: 100%;">
+
+                                            <input type="text" class="form-control" name="vlan_id_backend2"
+                                                   id="vlan_id_backend2"
+                                                   value="{{deploy_data['cluster_network_sittings']['vlan_id_backend2']}}">
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                            <!-- --------------------------------------------------------------------------- -->
+
+
+                            <br/>
+
+                        </div>
+
+                        <div class="box-footer">
+                            <input type="hidden" id="validate">
+                            <button type="submit" class="btn btn-primary pull-right margin">Next</button>
+                            <button type="submit" class="btn btn-primary pull-right margin"
+                                    onclick="change_action('{{ url_for('wizard_controller.back_to_cluster_interface_setting') }}')">
+                                Previous
+                            </button>
+                            <button type="submit" class="btn btn-primary pull-right margin"
+                                            onclick="change_action('{{ url_for('wizard_controller.reset_wizard') }}')">
+                                        Reset
+                                    </button>
+
+                        </div>
+
+
+                    </div>
+
+                    {% elif flag == "err" %}
+                    <div class="box  box-default">
+                        <div class="box-body">
+                            {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+
+            </div>
+        </div>
+        </form>
+    </div>
+    </div>
+    </div>
+</section><!-- /.content -->
+{% endblock %}
+
+
+{% block js%}
+<!--input mask -->
+<script src="/static/plugins/input-mask/jquery.inputmask.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.date.extensions.js"></script>
+<script src="/static/plugins/input-mask/jquery.inputmask.extensions.js"></script>
+<script src="/static/dist/js/pages/cluster/cluster_network_setting.js?v=7777777"></script>
+
+<script>
+    function change_action(url) {
+
+        $('#validate').val('false');
+        $('#cluster_network_config').attr("action", url);
+        $("#cluster_network_config").submit();
+    }
+    var messages = {}
+    messages.save_cluster_network_setting_lbl_iscsi1_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_iscsi1_empty") }}';
+    messages.save_cluster_network_setting_lbl_iscsi2_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_iscsi2_empty") }}';
+    messages.save_cluster_network_setting_lbl_backend1_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_backend1_empty") }}';
+    messages.save_cluster_network_setting_lbl_backend2_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_backend2_empty") }}';
+    messages.save_cluster_network_setting_lbl_ip_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_ip_empty") }}';
+    messages.save_cluster_network_setting_lbl_ip_invalid = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_ip_invalid") }}';
+    messages.save_cluster_network_setting_lbl_subnet_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_subnet_empty") }}';
+    messages.save_cluster_network_setting_lbl_subnet_invalid = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_subnet_invalid") }}'
+    messages.save_cluster_network_setting_lbl_backend1_vlan_id_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_require_backend1_vlan_id") }}'
+    messages.save_cluster_network_setting_lbl_backend2_vlan_id_empty = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_require_backend2_vlan_id") }}'
+    messages.save_cluster_network_setting_lbl_validate_vlan_id = '{{ gettext("ui_deploy_save_cluster_network_setting_lbl_validate_backend_vlan_id_number") }}'
+</script>
+{% endblock %}

@@ -1,0 +1,142 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+{% block title %} <title>Buckets</title>{%endblock%}
+{% block head %}
+<link rel="stylesheet" href="/static/plugins/jqtree/jqtree.css">
+{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration</li>
+    <li><i class="fa fa-map"></i> CRUSH</li>
+    <li><i class="fa fa-sitemap"></i> Buckets Tree</li>
+</ol>
+{% endblock %}
+
+{% block content_header %} Buckets Tree{% endblock %}
+
+{% block content %}
+
+<section class="content">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-body" onload="get_buckets_types();">
+                    <!-- message area -->
+                    {{ macros.message(gettext(err), gettext(success), gettext(warning)) }}
+                    <!--/ message area -->
+
+                    <a type="button" data-tooltip="Add Bucket" data-tooltip-position="bottom" style="margin: 8px;"
+                       data-toggle="modal" id="add_root"
+                       class="btn btn-primary btn-xs"
+                       data-target="#modal_add_node"> <span class="glyphicon glyphicon-plus"></span> </a>
+
+                    <div>
+                        <div class="col-md-6" id="tree1" style="font-size: 16px "></div>
+                        <div class="col-md-6"></div>
+                    </div>
+
+                    <!-- Modal -->
+
+                    <div class="modal fade" id="modal_add_node" tabindex="-1" role="dialog"
+                         aria-nameledby="exampleModalname"
+                         aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <label class="modal-title" id="exampleModalname">Add Bucket</label>
+                                    <button type="button" onclick="remove_class();" class="close" data-dismiss="modal"
+                                            aria-name="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label id="parent_lbl" hidden><i class=""></i>Parent: </label>
+
+                                        <div>
+                                            <name maxlength="50" id="parent_value"><i class=""></i></name>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="hash" id="hash">
+                                    <input type="hidden" name="alg" id="alg">
+                                    <input type="hidden" name="node_id" id="node_id">
+
+                                    <div class="form-group">
+                                        <label id="name_lbl"><i class=""></i>Name:<font color="red">*</font></label>
+                                        <input class="form-control" maxlength="50" type="text"
+                                               id="name" name="name"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label id="type_lbl"><i class=""></i>Type:<font color="red">*</font></label>
+                                        <select class="form-control" name="type" id="type">
+
+                                        </select>
+                                    </div>
+
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" onclick="remove_class();" class="btn btn-secondary"
+                                            data-dismiss="modal">Cancel
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="return addNode();">Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+                <form action="{{ url_for('crush_controller.save_bucket_tree') }}" method="post" id="bucket_tree">
+                    <input type="hidden" name="bucket" id="bucket">
+
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary pull-right">Save</button>
+                        <button type="button" style="margin-right: 10px" class="btn btn-default pull-right"
+                                id="cancel_btn">Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}
+
+
+{% block sidebar_menu %}
+{{ macros.nav('Crush Map' , 'Bucket Tree') }}
+{% endblock %}
+
+{% block js %}
+<script src="/static/plugins/jQueryUI/jquery-ui.min.js"></script>
+<script src="/static/plugins/jqtree/jqtree.js"></script>
+<script src="/static/dist/js/pages/crush/tree.js"></script>
+<script>
+    var path = "{{ url_for('crush_controller.get_bucket_list') }}";
+    set_cancel_add(path);
+    var messages = {}
+    messages.add_lbl_bucket_name_space = '{{ gettext("ui_admin_bucket_name_space") }}';
+    messages.confirm_saving_crush_map = '{{ gettext("ui_admin_confirm_saving_crush_map") }}'
+    messages.prevent_delete_bucket = '{{ gettext("ui_admin_prevent_delete_bucket_has_children") }}'
+    messages.confirm_deleting_bucket = '{{ gettext("ui_admin_confirm_delete_bucket") }}'
+    messages.add_lbl_bucket_name_empty = '{{ gettext("ui_admin_bucket_name_empty") }}';
+
+
+</script>
+{% endblock %}

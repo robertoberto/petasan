@@ -1,0 +1,46 @@
+[
+  {
+    "name": "root1", "type": "root",  "id": -1, "weight" : 0.95, "hash" : 0 , "alg" : "straw2",
+    "children": [
+      {
+       "name": "rack1", "type": "rack",  "id": -2,"weight" : 0.95, "hash" : 0 , "alg" : "straw2",
+       "children": [
+
+          {"name": "node1", "type": "host", "id": -3,"weight" : 0.95, "hash" : 0 , "alg" : "straw2",
+            "children": [
+              { "name": "osd1", "type": "osd" , "id": 0 },
+              { "name": "osd2", "type": "osd" , "id": 1 }
+            ]
+          },
+
+          {"name": "node2", "type": "host", "id": -4,
+            "children": [
+              { "name": "osd3", "type": "osd" , "id": 2 ,"weight" : 0.95, "hash" : 0 , "alg" : "straw2"},
+              { "name": "osd4", "type": "osd" , "id": 3 ,"weight" : 0.95, "hash" : 0 , "alg" : "straw2"}
+            ]
+          }
+        ]
+      },
+
+      {
+       "name": "rack2", "type": "rack",  "id": -5,"weight" : 0.95, "hash" : 0 , "alg" : "straw2",
+       "children": [
+
+          {"name": "node3", "type": "host", "id": -6,"weight" : 0.95, "hash" : 0 , "alg" : "straw2",
+            "children": [
+              { "name": "osd5", "type": "osd" , "id": 4 },
+              { "name": "osd6", "type": "osd" , "id": 5 }
+            ]
+          },
+
+          {"name": "node4", "type": "host", "id": -7,"weight" : 0.95, "hash" : 0 , "alg" : "straw2",
+            "children": [
+              { "name": "osd7", "type": "osd" , "id": 6 },
+              { "name": "osd8", "type": "osd" , "id": 7 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

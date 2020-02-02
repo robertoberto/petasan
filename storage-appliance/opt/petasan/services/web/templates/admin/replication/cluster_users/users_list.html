@@ -1,0 +1,178 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head%}
+<!-- Ionicons -->
+<link rel="stylesheet" href="/static/bootstrap/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/plugins/datatables/dataTables.bootstrap.css">
+{% endblock %}
+
+{% block title%}<title>Replication Users</title>{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb">
+    <li><i class="fa fa-clone"></i> Replication </li>
+    <li><i class="fa fa-child"></i> Users</li>
+</ol>
+{% endblock %}
+
+
+{% block content_header%} Replication Users{% endblock %}
+{% block content %}
+
+<style>
+
+    #rep_users td  a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        color: #000000;
+    }
+
+    #rep_users td  a:hover {
+      color: #000000;
+    }
+
+    #rep_users td  a:active {
+      color: #000000;
+    }
+
+    #rep_users td  a:visited {
+      color: #000000;
+    }
+
+</style>
+
+<section class="content">
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-body">
+                    {{ macros.message(gettext(err), gettext(success), gettext(warning), gettext(info)) }}
+                    <div>
+                        <form method="POST" action="{{ url_for('replication_users_controller.add_rep_usr') }}" id="add_replication_user">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                Add Replication User
+                            </button>
+                        </form>
+                    </div>
+
+                    <br>
+
+                    <div>
+
+                        <table id="rep_users" class="table table-bordered table-striped">
+
+                            <thead>
+                            <tr>
+                                <th style="width: 75%">Name</th>
+                                <th style="width: 25%">Action</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+
+
+                            {% if users_list %}
+
+                            {% for user_name, user_info in users_list.items() %}
+                            <tr class="user">
+
+                                <td class="name">
+                                    <a id="userName" href="#" data-toggle="modal" data-target="#exampleModal" name="{{ user_name }}"
+                                       onclick="get_user_info('{{ user_name }}')">{{ user_name }}</a>
+                                </td>
+
+                                <td>
+                                    <div title="Edit User" class="btn-group">
+
+                                        <form method="POST"
+                                              action="{{ url_for('replication_users_controller.edit_user',name = user_name) }}"
+                                              id="edit_user_form">
+                                            <button type="submit" class="btn btn-default pull-right">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                    <div title="Delete user" class="btn-group">
+
+                                        <form action="{{ url_for('replication_users_controller.remove_user',name = user_name) }}"
+                                              method="POST" id="delete_user_form">
+                                            <button onclick="return doDelete('{{ user_name }}')" type="submit"
+                                                    class="btn btn-default confirm">
+                                                <i class="fa fa-remove"></i>
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% endif %}
+
+                            </tbody>
+                        </table>
+
+                        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                             aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+                            {% include "admin/replication/cluster_users/view_users_details.html" %}
+
+                        </div>
+
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}
+
+{% block sidebar_menu %}
+{{macros.nav('ScheduleJobs','ReplicationUsers')}}
+{% endblock %}
+
+{% block js%}
+
+<script src="/static/plugins/datatables/jquery.dataTables.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script>
+    $(function () {
+        $("#rep_users").DataTable({
+            "columnDefs": [
+                {"orderable": false, "targets": [1]}
+            ]
+        });
+    });
+</script>
+<script>
+    var messages = {};
+    messages.confirm_deleting_username = '{{ gettext("ui_admin_confirm_deleting_username") }}';
+</script>
+<script src="/static/dist/js/pages/replication/cluster_users/users_list.js?v=7777777"></script>
+
+{% endblock %}

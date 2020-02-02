@@ -1,0 +1,323 @@
+<!--
+ Copyright (C) 2019 Maged Mokhtar <mmokhtar <at> petasan.org>
+ Copyright (C) 2019 PetaSAN www.petasan.org
+
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Affero General Public License
+ as published by the Free Software Foundation
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+ -->
+{% extends "admin/base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/dist/css/skins/_all-skins.min.css">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+{% endblock %}
+
+{% block title %}<title> General Settings </title>{% endblock %}
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li><i class="fa fa-wrench"></i> Configuration </li>
+    <li><i class="fa fa-gears"></i> General Settings</li>
+</ol>
+{% endblock %}
+{% block content_header %}General Settings{% endblock %}
+{% block content %}
+<section class="content">
+    <form id="cluster_setting" method="post"
+          action="{{ url_for('configuration_controller.save_cluster_setting') }}">
+
+
+        <div class="row">
+
+            <div class="col-md-12">
+
+                <div class="box  box-default">
+
+
+                    <div class="box-body">
+
+
+                        <!-- message area -->
+                        {{ macros.message(gettext(err),gettext(success),gettext(warning)) }}
+
+                        <!--Replicas-->
+                        <!--
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label id="lblReplicas"><i class=""></i> Number of Replicas</label>
+                                    <select class="form-control" name="replica_no" id="replica_no">
+                                        <option value="2" {% if form.replica_no=="2" %} selected="selected" {% endif %}>
+                                            2
+                                        </option>
+                                        <option value="3" {% if form.replica_no=="3" %} selected="selected" {% endif %}>
+                                            3
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        -->
+                        <div class="row">
+                            <div class="col-md-5">
+                                <!--NTP Time server-->
+                                <div class="form-group">
+                                    <label id="lblInternetTimeServer">NTP Time Server:
+                                        <i class=""></i></label>
+                                    <input type="text" class="form-control"
+                                           id="internet_time_server" name="internet_time_server"
+                                           value="{{ form.internet_time_server }}"
+                                           size="40"
+                                            />
+                                </div>
+                            </div>
+                        </div>
+                        <!--Compression-->
+                        <!--    {#
+                        <div class="row">
+                            <div class="box-header">
+                                <h3 class="box-title">Data Compression</h3>
+                            </div>
+                        </div>
+                        <div style="margin-left: 12px; width: 98%; border: 1px solid #f4f4f4; padding-top: 10px; padding-left: 10px;">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-12"><label>Compression:</label></div>
+                                    </div>
+                                <div class="col-md-1"></div>
+                                    <div class="col-md-1">
+                                        <div class=""></div>
+                                        <div class="row" style="margin-left: -97px;"><label class="radio-inline"><input
+                                                type="radio" onchange="$('#compression_algorithm').show();" value="2"
+                                                {% if form.compression_mode==2 %} checked {% endif %}
+                                                 id="enabled_mode"
+                                                name="compression">Enabled</label></div>
+
+                                    </div>
+                                    <div class="col-md-10" style="margin-left: -9%">
+                                        <label class="radio-inline"><input type="radio" onchange="$('#compression_algorithm').hide();" value="1"
+                                               {% if form.compression_mode==1 or form.compression_algorithm ==1 %} checked {% endif %}
+                                                                 id="disabled_mode"  name="compression">Disabled</label>
+                                    </div>
+
+                            </div><div class="row" style="height: 15px"></div>
+                            <div class="row">
+                                <div class="col-md-5" id="compression_algorithm">
+                                    <div class="form-group">
+                                        <label>Compression Algorithm: </label>
+                                        <select class="form-control" id="compression_algorithm_value"
+                                                name="compression_algorithm_value">
+                                            <option value="5" {% if form.compression_algorithm==5 %} selected="selected"
+                                                    {% endif
+                                                    %}>lz4
+                                            </option>
+                                            <option value="3" {% if form.compression_algorithm==3 or form.compression_mode==1 %} selected="selected"
+                                                    {% endif
+                                                    %}>snappy
+                                            </option>
+                                            <option value="2" {% if form.compression_algorithm==2 %} selected="selected"
+                                                    {% endif
+                                                    %}>zlib
+                                            </option>
+                                            <option value="4" {% if form.compression_algorithm==4 %} selected="selected"
+                                                    {% endif
+                                                    %}>zstd
+                                            </option>
+
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-5"></div>
+
+                            </div>
+
+                        </div>
+                           #}-->
+                        <div class="row">
+                            <div class="box-header">
+                                <h3 class="box-title">SMTP Settings</h3>
+                            </div>
+                        </div>
+                        <div style="margin-left: 12px; width: 98%; border: 1px solid #f4f4f4; padding: 10px;">
+                            <div class="row">
+
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label id="lblSMTPServer">SMTP Server:<i
+                                                class=""></i></label>
+
+                                        <input type="text" class="form-control"
+                                               id="smtp_server" name="smtp_server"
+                                               value="{{ form.smtp_server }}"
+                                               size="40"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label id="lblPortNum">Port Number:<font
+                                                color="red"></font><i
+                                                class=""></i></label>
+
+                                        <input type="text" class="form-control"
+                                               id="port_no" name="port_no"
+                                               value="{{ form.smtp_port }}"
+                                               size="40"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+
+                                </div>
+                            </div>
+                            <div class="row">
+
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5" id="server_authentication">
+                                    <div class="form-group">
+                                        <label for="server_authentication">Server Authentication: </label>
+                                        <select class="form-control" id="authentication_value"
+                                                name="authentication_value"
+                                                onchange="onChangeServerAuthenticationValue()">
+                                            <option value="4" {% if form.authentication_value==4 %} selected="selected"
+                                                    {% endif
+                                                    %}>Anonymous
+                                            </option>
+                                            <option value="3" {% if form.authentication_value==3 %} selected="selected"
+                                                    {% endif
+                                                    %}>Basic Authentication
+                                            </option>
+                                            <option value="1" {% if form.authentication_value==1 %} selected="selected"
+                                                    {% endif
+                                                    %}>SSL
+                                            </option>
+                                            <option value="2" {% if form.authentication_value==2 %} selected="selected"
+                                                    {% endif
+                                                    %}>TLS
+                                            </option>
+
+
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                </div>
+
+                            </div>
+                            <!-- email-->
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <label id="lblEmail"><i
+                                                class=""></i>Sender Email:<font
+                                                color="red"></font></label>
+
+                                        <input class="form-control"
+                                               id="email" name="email"
+                                               value="{{ form.smtp_email }}"
+                                               size="40"/>
+                                    </div>
+                                </div>
+                                <!-- password -->
+                                <div class="col-md-5">
+                                    <div class="form-group" id="pass_hide">
+                                        <label id="lblPassword"><i class=""></i>Password:<font
+                                                color="red"></font></label>
+                                        <input class="form-control" maxlength="50" type="password"
+                                               id="userPassword" autocomplete="off"
+                                               name="userPassword" value="{{form.smtp_passwod}}">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <button id="test_mail" class="btn btn-primary" type="button" onclick="test_email()">
+                                        Test Email
+                                    </button>
+                                </div>
+                                <div class="col-md-10"></div>
+                            </div>
+
+                            <div class="row" id="email_sent_successfully">
+                                <div class="col-md-12">
+                                    <div class="alert alert-success alert-dismissable">
+                                        <button type="button" class="close"
+                                                onclick="$('#email_sent_successfully').hide();" aria-hidden="true">×
+                                        </button>
+                                        <h5><i class="icon fa fa-check"></i>{{gettext("ui_admin_cluster_settings_label_test_email_sent")
+                                            }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row" id="email_sent_failed">
+                                <div class="col-md-12">
+                                    <div class="alert alert-danger alert-dismissable">
+                                        <button type="button" class="close" onclick="$('#email_sent_failed').hide();"
+                                                aria-hidden="true">×
+                                        </button>
+                                        <h5 id="failed_sent"><i class="icon fa fa-ban"></i></h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <!--</div>-->
+                        <!--</div>-->
+
+
+                    </div>
+                    <div class="overlay" id="overlay">
+                        <i class="fa fa-refresh fa-spin"></i>
+
+                    </div>
+
+                    <div class="box-footer">
+
+                        <button type="submit" class="btn btn-primary pull-right">Save</button>
+                        <button type="reset" style="margin-right: 20px" class="btn btn-default pull-right"
+                                id="cancelBtn">Cancel
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+
+        </div>
+
+    </form>
+
+</section><!-- /.content -->
+{% endblock %}
+
+
+{% block sidebar_menu %}
+{{ macros.nav('Configurtion','GeneralSettings') }}
+{% endblock %}
+
+{% block js %}
+
+<script src="/static/dist/js/pages/configuration/cluster_settings.js?v=7777777"></script>
+<script>
+    var messages = new Object()
+    messages.label_internet_time_server = '{{ gettext("ui_admin_cluster_settings_label_internet_time_server") }}';
+    messages.label_smtp_port_number = '{{gettext("ui_admin_cluster_settings_label_smtp_port_number") }}';
+    messages.label_smtp_port_number_valid = '{{gettext("ui_admin_cluster_settings_label_smtp_port_number_valid")}}'
+    messages.label_smtp_email = '{{gettext("ui_admin_cluster_settings_label_smtp_email") }}';
+    messages.label_smtp_password = '{{gettext("ui_admin_cluster_settings_label_smtp_password") }}';
+    messages.label_smtp_valid_email = '{{gettext("ui_admin_cluster_settings_label_smtp_valid_email") }}';
+    messages.label_smtp_empty_smtp = '{{gettext("ui_admin_cluster_settings_label_test_email_empty_smtp") }}';
+    var test_email_url = "{{ url_for('configuration_controller.test_email') }}"
+    var loginUrl = "{{ url_for('main_controller.login') }}";
+</script>
+
+{% endblock %}

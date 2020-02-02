@@ -1,0 +1,12 @@
+diff -upr -x '*.[^ch]' a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
+--- a/drivers/target/target_core_device.c	2018-05-29 23:04:44.000000000 +0200
++++ b/drivers/target/target_core_device.c	2018-07-19 09:50:32.508025498 +0200
+@@ -1022,7 +1022,7 @@ int target_configure_device(struct se_de
+ 	 * passthrough because this is being provided by the backend LLD.
+ 	 */
+ 	if (!(dev->transport->transport_flags & TRANSPORT_FLAG_PASSTHROUGH)) {
+-		strncpy(&dev->t10_wwn.vendor[0], "LIO-ORG", 8);
++		strncpy(&dev->t10_wwn.vendor[0], "PETASAN", 8);
+ 		strncpy(&dev->t10_wwn.model[0],
+ 			dev->transport->inquiry_prod, 16);
+ 		strncpy(&dev->t10_wwn.revision[0],
